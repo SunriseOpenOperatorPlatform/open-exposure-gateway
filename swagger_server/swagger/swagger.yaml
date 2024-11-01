@@ -1,0 +1,1974 @@
+openapi: 3.0.3
+info:
+  title: Edge Application Management API
+  description: |
+    Edge Application Management API allows API consumers to manage the
+    Life Cycle of an Application and to Discover Edge Cloud Zones.
+    # Overview
+    The reference scenario foresees a distributed Telco Edge Cloud where any
+    Application Delevoper, known as an Application Provider, can host and
+    deploy their application according to their specifications and operational
+    criteria (e.g. within an specific geographical zone for data protection
+    purposes, ensure a minimum QoS for the application clients, etc).
+    Through Telco Edge Cloud services Developers around the globe can be
+    benefit from the traditional Cloud strengths but expertise and advantages
+    of the Mobile Network Operators offering to their users an evolved
+    experience for XR, V2X, Holographic and other new services.
+
+    # Introduction
+    The Edge Application Management API provides capabilities for lifecycle
+    management of application, instances and edge cloud zone discovery.
+    Lifecycle Management allows Application Provider to onboard
+    their application to the Edge Cloud Platform which do bookkeeping,
+    resource validation and other pre-deployment operations.
+    Application details can contain components network specification,
+    package type (QCOW2, OVA, CONTAINER, HELM), operating system details and
+    respository to download the image of the desired application.
+    Once the application is available on the Edge Cloud
+    Platform, the Application Provider can instantiate the application.
+    Edge Cloud Provider helps Application Provider to decide where to
+    instantiate the applications allowing them to retrieve a list of
+    Edge Cloud Zones that meets the provided criteria.
+
+    This discovery can be filtered by an specific geographical region
+    (e.g when data residency is need) and by status (active, inactive, unknown)
+    Application Provider can ask the Edge Cloud Platform to instantiate the
+    application to one or several Edge Cloud Zones that meet the criteria.
+    Typically when more than one Edge Cloud Zone is required in the same
+    geographic boundary, Application Provider can define instead
+    the entire Edge Cloud Region.
+
+    Application Provider can retrieve the information of the instances
+    for a given application, the information could be the Edge Cloud Zone
+    where the instance is, status (ready, instantiating, failed,
+    terminating, unknown) and endpoint (ip, port, fqdn).
+    Application Provider can terminate an instance of an application
+    (appInstanceId) or all the instances for a given appId.
+
+    # Quick Start
+    The usage of this API is based on several resources including GSMA
+    Edge Platform, Public Cloud and SDOs, to define a first approach on the
+    lifecycle management of application instances and edge cloud zones discovery
+
+    Before starting to use the API, the developer needs to know about
+    the below specified details.
+
+    __Application Management__
+    * __submitApp__ - Submits application details to an Edge Cloud Provider.
+    Based on the details provided, Edge Cloud Provider shall do bookkeeping,
+    resource validation and other pre-deployment operations.
+    * __deleteApp__ - Removes an application from an Edge Cloud Provider,
+    if there is a running instance of the given application,
+    the request cannot be done.
+    * __getApp__ - Retrieves the information of a given application.
+
+    __Application Instance Management__
+    * __createAppInstance__  Request the Edge Cloud Provider to instatiate
+    an instance of an application in a given Edge Cloud Zone,
+    if this parameter is not set, the Edge Cloud Provider will instantiate
+    the applications in all the Edge Cloud Zones.
+    * __getAppInstance__  Retrieves the list with information of the instances
+    related to a given application.
+    * __deleteAppInstance__ - Removes a given application instance from an Edge
+    Cloud Zone.
+
+    __Edge Cloud information__
+    *  __getEdgeCloudZones__ List of the operators Edge Cloud Zones and their
+    status, ordering the results by location and filtering by status
+    (active/inactive/unknown)
+
+    # Authentication and Authorization
+    CAMARA guidelines defines a set of authorization flows which can grant API
+    clients access to the API functionality, as outlined in the document
+    [CAMARA-API-access-and-user-consent.md](https://github.com/camaraproject\
+    /IdentityAndConsentManagement/blob/main/documentation/CAMARA-API-access\
+    -and-user-consent.md).
+    Which specific authorization flows are to be used will be determined during
+    onboarding process, happening between the API Client and the Telco Edge
+    exposing the API, taking into account the declared purpose for accessing the
+    API, while also being subject to the prevailing legal framework dictated by
+    local legislation.
+
+    It is important to remark that in cases where personal user data is
+    processed by the API, and users can exercise their rights through mechanisms
+    such as opt-in and/or opt-out, the use of 3-legged access tokens becomes
+    mandatory. This measure ensures that the API remains in strict compliance
+    with user privacy preferences and regulatory obligations, upholding the
+    principles of transparency and user-centric data control.
+    # API documentation
+    Two operations have been defined in Edge Application Management API.
+
+    *__Application__* - The Application Provider submit application metadata to
+    the Edge Cloud Platform. The Edge Cloud Platform generates an appId for that
+    metadata that will be used to instantiate the application within
+    the Edge Cloud Zone.
+
+    *__Edge Cloud__* - Retrieves all the Edge Cloud Zones available according to
+    some defined parameters where an application can be instantiated.
+
+    Definitions of terminologies commonly referred
+    to throughout the API descriptions.
+    * __Application Provider__ - The provider of the application that accesses
+    an Edge Cloud Provider to deploy its application on the Edge Cloud.
+    An Application Provider may be part of a larger organisation,
+    like an enterprise, enterprise customer of an Edge Cloud Provider,
+    or be an independent entity.
+    * __Application__ - Contains the information about the application to be
+    instantiated. Descriptor, binary image, charts or any other package
+    assosiated with the application. The Application Provider request contains
+    mandatory criteria (e.g. required CPU, memory, storage, bandwidth) defined
+    in an Application. The Edge Cloud Platform generates a unique ID
+    for an Application that is ready to be instantiated.
+    * __Application Instance__ - Is an instance (VM or Container based) running
+    in an Edge Cloud Zone. The Edge Cloud Platform generates a unique ID
+    for each instance.
+    * __Edge Cloud__ - Cloud-like capabilities located at the network edge
+    including, from the Application Provider's perspective, access to
+    elastically allocated compute, data storage and network resources,
+    this access is provided through the Edge Cloud Platform.
+    * __Edge Cloud Provider__ - Company name of the provider offering the
+    Edge Services through the Edge Cloud Platform.
+    Could be an Operator or a Cloud Provider.
+    * __Edge Cloud Region__ - An Edge Cloud Region is equivalent
+    to a Region on a Public Cloud.
+    The higher construct in the hierarchy exposed to an Application
+    Provider who wishes to deploy an Application on the Edge Cloud and broadly
+    represents a geography. An Edge CloudRegion typically contains one or
+    multiple Edge Cloud Zones.
+    An Edge Cloud Region exists within an Edge Cloud.
+    * __Edge Cloud Zone__ - An Edge Cloud Zone is the lowest level of
+    abstraction exposed to an Application Provider who wants to deploy
+    an Application on Edge Cloud.
+    Edge Cloud Zones exists within a Edge Cloud Region.
+    ---
+  contact:
+    email: sp-edc@lists.camaraproject.org
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 0.9.3-wip
+externalDocs:
+  description: Product documentation at Camara
+  url: https://github.com/camaraproject/EdgeCloud
+servers:
+- url: "{apiRoot}/{basePath}"
+  variables:
+    apiRoot:
+      description: API root
+      default: http://localhost:8080
+    basePath:
+      description: Base path for the Edge Application Management API
+      default: edge-application-management
+tags:
+- name: Application
+  description: Application and Application Instance Lice Cycle Management
+- name: Edge Cloud
+  description: Edge Cloud Zones Availability
+paths:
+  /apps:
+    post:
+      tags:
+      - Application
+      summary: Submit application metadata to the Edge Cloud Provider.
+      description: |
+        Contains the information about the application to be
+        instantiated in the Edge Cloud
+      operationId: submit_app
+      parameters:
+      - name: x_correlator
+        in: header
+        description: |
+          Correlation id for the different services
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: |
+          The Application Provider request contains mandatory
+          criteria (e.g. required CPU, memory, storage, bandwidth) and
+          optional parameters.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppManifest'
+        required: true
+      responses:
+        "201":
+          description: Application created successfully
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmittedApp'
+        "400":
+          description: Bad request
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 400
+                code: INVALID_ARGUMENT
+                message: Schema validation failed at  ...
+        "401":
+          description: Unauthorized
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 401
+                code: UNAUTHENTICATED
+                message: "Authorization failed: ..."
+        "403":
+          description: Unauthorized
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 403
+                code: PERMISSION_DENIED
+                message: "Operation not allowed: ..."
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 409
+                code: CONFLICT
+                message: App already exists
+        "500":
+          description: Internal Server Error
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 500
+                code: INTERNAL
+                message: "Internal server error: ..."
+        "501":
+          description: Not Implemented
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 501
+                code: NOT_IMPLEMENTED
+                message: Service not implemented
+        "503":
+          description: Service Unavailable
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 503
+                code: UNAVAILABLE
+                message: Service unavailable
+      # security:
+      # - openId:
+      #   - edge-application-management:apps:write
+      x-openapi-router-controller: swagger_server.controllers.application_controller
+  /apps/{appId}:
+    get:
+      tags:
+      - Application
+      summary: Retrieve the information of an Application
+      description: |
+        Ask the Edge Cloud Provider the information for a given application
+      operationId: get_app
+      parameters:
+      - name: x_correlator
+        in: header
+        description: |
+          Correlation id for the different services
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: appId
+        in: path
+        description: |
+          A globally unique identifier associated with the
+          application.
+          Edge Cloud Provider generates this identifier when the application
+          is submitted.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/AppId'
+      responses:
+        "200":
+          description: Information of Application
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+        "401":
+          description: Unauthorized
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 401
+                code: UNAUTHENTICATED
+                message: "Authorization failed: ..."
+        "403":
+          description: Unauthorized
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 403
+                code: PERMISSION_DENIED
+                message: "Operation not allowed: ..."
+        "404":
+          description: Not Found
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 404
+                code: NOT_FOUND
+                message: Resource does not exist
+        "500":
+          description: Internal Server Error
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 500
+                code: INTERNAL
+                message: "Internal server error: ..."
+        "503":
+          description: Service Unavailable
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 503
+                code: UNAVAILABLE
+                message: Service unavailable
+      # security:
+      # - openId:
+      #   - edge-application-management:apps:read
+      x-openapi-router-controller: swagger_server.controllers.application_controller
+    delete:
+      tags:
+      - Application
+      summary: |
+        Delete an Application from an Edge Cloud Provider
+      description: Delete all the information and content related to an Application
+      operationId: delete_app
+      parameters:
+      - name: x_correlator
+        in: header
+        description: |
+          Correlation id for the different services
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: appId
+        in: path
+        description: |
+          Identificator of the application to be
+          deleted provided by the Edge Cloud Provider
+          once the submission was successful
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/AppId'
+      responses:
+        "202":
+          description: Request accepted
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+        "204":
+          description: App deleted
+        "400":
+          description: Bad request
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 400
+                code: INVALID_ARGUMENT
+                message: Schema validation failed at  ...
+        "401":
+          description: Unauthorized
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 401
+                code: UNAUTHENTICATED
+                message: "Authorization failed: ..."
+        "403":
+          description: Unauthorized
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 403
+                code: PERMISSION_DENIED
+                message: "Operation not allowed: ..."
+        "404":
+          description: Not Found
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 404
+                code: NOT_FOUND
+                message: Resource does not exist
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 409
+                code: CONFLICT
+                message: App with a running application instance cannot be deleted
+        "500":
+          description: Internal Server Error
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 500
+                code: INTERNAL
+                message: "Internal server error: ..."
+        "503":
+          description: Service Unavailable
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 503
+                code: UNAVAILABLE
+                message: Service unavailable
+      # security:
+      # - openId:
+      #   - edge-application-management:apps:delete
+      x-openapi-router-controller: swagger_server.controllers.application_controller
+  /apps/{appId}/instances:
+    get:
+      tags:
+      - Application
+      summary: Retrieve the information of Application Instances for a given App
+      description: |
+        Ask the Edge Cloud Provider the information of the instances for a
+        given application
+      operationId: get_app_instance
+      parameters:
+      - name: x_correlator
+        in: header
+        description: |
+          Correlation id for the different services
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: appId
+        in: path
+        description: |
+          A globally unique identifier associated with
+          the application.
+          Edge Cloud Provider generates this identifier when the
+          application is submitted.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/AppId'
+      - name: appInstanceId
+        in: query
+        description: |
+          A globally unique identifier associated with a running
+          instance of an application within an specific Edge Cloud Zone.
+          Edge Cloud Provider generates this identifier.
+        required: false
+        style: form
+        explode: true
+        schema:
+          $ref: '#/components/schemas/AppInstanceId'
+      - name: region
+        in: query
+        description: |
+          Human readable name of the geographical Edge Cloud Region of
+          the Edge Cloud. Defined by the Edge Cloud Provider.
+        required: false
+        style: form
+        explode: true
+        schema:
+          $ref: '#/components/schemas/EdgeCloudRegion'
+      responses:
+        "200":
+          description: Information of Application Instances
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_1'
+        "401":
+          description: Unauthorized
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 401
+                code: UNAUTHENTICATED
+                message: "Authorization failed: ..."
+        "403":
+          description: Unauthorized
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 403
+                code: PERMISSION_DENIED
+                message: "Operation not allowed: ..."
+        "404":
+          description: Not Found
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 404
+                code: NOT_FOUND
+                message: Resource does not exist
+        "500":
+          description: Internal Server Error
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 500
+                code: INTERNAL
+                message: "Internal server error: ..."
+        "503":
+          description: Service Unavailable
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 503
+                code: UNAVAILABLE
+                message: Service unavailable
+      # security:
+      # - openId:
+      #   - edge-application-management:instances:read
+      x-openapi-router-controller: swagger_server.controllers.application_controller
+    post:
+      tags:
+      - Application
+      summary: Instantiation of an Application
+      description: |
+        Ask the Edge Cloud Platform to instantiate an application to one
+        or several Edge Cloud Zones with an Application as an input and an
+        Application Instance as the output.
+      operationId: create_app_instance
+      parameters:
+      - name: x_correlator
+        in: header
+        description: |
+          Correlation id for the different services
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: appId
+        in: path
+        description: |
+          A globally unique identifier associated with the
+          application. Edge Cloud Provider generates this identifier when
+          the application is submitted.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/AppId'
+      requestBody:
+        description: Array of Edge Cloud Zone
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppZones'
+        required: true
+      responses:
+        "202":
+          description: Application instantiation accepted
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+            Location:
+              description: Contains the URI of the newly created application.
+              required: true
+              style: simple
+              explode: false
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_202'
+        "400":
+          description: Bad request
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 400
+                code: INVALID_ARGUMENT
+                message: Schema validation failed at  ...
+        "401":
+          description: Unauthorized
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 401
+                code: UNAUTHENTICATED
+                message: "Authorization failed: ..."
+        "403":
+          description: Unauthorized
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 403
+                code: PERMISSION_DENIED
+                message: "Operation not allowed: ..."
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 409
+                code: CONFLICT
+                message: Application already instantiated in the given Edge Cloud
+                  Zone or Edge Cloud Region
+        "500":
+          description: Internal Server Error
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 500
+                code: INTERNAL
+                message: "Internal server error: ..."
+        "501":
+          description: Not Implemented
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 501
+                code: NOT_IMPLEMENTED
+                message: Service not implemented
+        "503":
+          description: Service Unavailable
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 503
+                code: UNAVAILABLE
+                message: Service unavailable
+      # security:
+      # - openId:
+      #   - edge-application-management:instances:write
+      x-openapi-router-controller: swagger_server.controllers.application_controller
+  /apps/{appId}/instances/{appInstanceId}:
+    delete:
+      tags:
+      - Application
+      summary: Terminate an Application Instance
+      description: |
+        Terminate a running instance of an application within
+        an Edge Cloud Zone
+      operationId: delete_app_instance
+      parameters:
+      - name: x_correlator
+        in: header
+        description: |
+          Correlation id for the different services
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: appId
+        in: path
+        description: |
+          A globally unique identifier associated with the
+          application. Edge Cloud Provider generates this identifier
+          when the application is submitted.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/AppId'
+      - name: appInstanceId
+        in: path
+        description: |
+          Identificator of the specific application instance
+          that will be terminated
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/AppInstanceId'
+      responses:
+        "202":
+          description: |
+            Request accepted to be processed. It applies for async
+            deletion process
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+        "204":
+          description: Application Instance Deleted
+        "400":
+          description: Bad request
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 400
+                code: INVALID_ARGUMENT
+                message: Schema validation failed at  ...
+        "401":
+          description: Unauthorized
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 401
+                code: UNAUTHENTICATED
+                message: "Authorization failed: ..."
+        "403":
+          description: Unauthorized
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 403
+                code: PERMISSION_DENIED
+                message: "Operation not allowed: ..."
+        "404":
+          description: Not Found
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 404
+                code: NOT_FOUND
+                message: Resource does not exist
+        "500":
+          description: Internal Server Error
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 500
+                code: INTERNAL
+                message: "Internal server error: ..."
+        "503":
+          description: Service Unavailable
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 503
+                code: UNAVAILABLE
+                message: Service unavailable
+      # security:
+      # - openId:
+      #   - edge-application-management:instances:delete
+      x-openapi-router-controller: swagger_server.controllers.application_controller
+  /edge-cloud-zones:
+    get:
+      tags:
+      - Edge Cloud
+      summary: Retrieve a list of the operators Edge Cloud Zones and their status
+      description: |
+        List of the operators Edge Cloud Zones and their
+        status, ordering the results by location and filtering by
+        status (active/inactive/unknown)
+      operationId: get_edge_cloud_zones
+      parameters:
+      - name: x_correlator
+        in: header
+        description: |
+          Correlation id for the different services
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: region
+        in: query
+        description: |
+          Human readable name of the geographical Edge Cloud Region of
+          the Edge Cloud. Defined by the Edge Cloud Provider.
+        required: false
+        style: form
+        explode: true
+        schema:
+          $ref: '#/components/schemas/EdgeCloudRegion'
+      - name: status
+        in: query
+        description: Human readable status of the Edge Cloud Zone
+        required: false
+        style: form
+        explode: true
+        schema:
+          $ref: '#/components/schemas/EdgeCloudZoneStatus'
+      responses:
+        "200":
+          description: |
+            Successful response, returning the
+            Available Edge Cloud Zones.
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EdgeCloudZones'
+        "401":
+          description: Unauthorized
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 401
+                code: UNAUTHENTICATED
+                message: "Authorization failed: ..."
+        "403":
+          description: Unauthorized
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 403
+                code: PERMISSION_DENIED
+                message: "Operation not allowed: ..."
+        "404":
+          description: Not Found
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 404
+                code: NOT_FOUND
+                message: Resource does not exist
+        "500":
+          description: Internal Server Error
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 500
+                code: INTERNAL
+                message: "Internal server error: ..."
+        "503":
+          description: Service Unavailable
+          headers:
+            x-correlator:
+              $ref: '#/components/headers/x-correlator'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfo'
+              example:
+                status: 503
+                code: UNAVAILABLE
+                message: Service unavailable
+      # security:
+      # - openId:
+      #   - edge-application-management:edge-cloud-zones:read
+      x-openapi-router-controller: swagger_server.controllers.edge_cloud_controller
+components:
+  schemas:
+    AccessEndpoint:
+      required:
+      - port
+      type: object
+      properties:
+        port:
+          $ref: '#/components/schemas/Port'
+        fqdn:
+          $ref: '#/components/schemas/Fqdn'
+        ipv4Addresses:
+          minItems: 1
+          type: array
+          description: IP version 4 of an application instance
+          items:
+            $ref: '#/components/schemas/Ipv4Addr'
+        ipv6Addresses:
+          minItems: 1
+          type: array
+          description: IP version 6 of an application instance.
+          items:
+            $ref: '#/components/schemas/Ipv6Addr'
+      description: |
+        Application Endpoint for an especific instance that is
+        running in an specific Edge Cloud Zone.
+      example:
+        ipv4Addresses:
+        - 192.168.0.1
+        - 192.168.0.1
+        port: 0
+        fqdn: fqdn
+        ipv6Addresses:
+        - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+        - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+      anyOf:
+      - required:
+        - fqdn
+      - required:
+        - ipv4Addresses
+      - required:
+        - ipv6Addresses
+    AppId:
+      type: string
+      description: |
+        A globally unique identifier associated with the application.
+        Edge Cloud Platform generates this identifier when the
+        Application is submitted.
+      format: uuid
+    AppInstanceId:
+      type: string
+      description: |
+        A globally unique identifier associated with a running
+        instance of an application.
+        Edge Cloud Platform generates this identifier when the
+        instantiation in the Edge Cloud Zone is successful.
+      format: uuid
+    AppInstanceInfo:
+      type: object
+      properties:
+        appInstanceId:
+          $ref: '#/components/schemas/AppInstanceId'
+        status:
+          type: string
+          description: Status of the application instance (default is 'unknown')
+          default: unknown
+          enum:
+          - ready
+          - instantiating
+          - failed
+          - terminating
+          - unknown
+        componentEndpointInfo:
+          minItems: 1
+          type: array
+          description: |
+            Information about the IP and Port exposed by the
+            Edge Cloud Platform.
+            Application Client shall use these access points to reach this
+            application instance
+          items:
+            $ref: '#/components/schemas/AppInstanceInfo_componentEndpointInfo'
+        edgeCloudZone:
+          $ref: '#/components/schemas/EdgeCloudZone'
+      description: Information about the application instance.
+      example:
+        appInstanceId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        componentEndpointInfo:
+        - interfaceId: interfaceId
+          accessPoints:
+            ipv4Addresses:
+            - 192.168.0.1
+            - 192.168.0.1
+            port: 0
+            fqdn: fqdn
+            ipv6Addresses:
+            - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+            - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+        - interfaceId: interfaceId
+          accessPoints:
+            ipv4Addresses:
+            - 192.168.0.1
+            - 192.168.0.1
+            port: 0
+            fqdn: fqdn
+            ipv6Addresses:
+            - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+            - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+        edgeCloudZone:
+          edgeCloudProvider: edgeCloudProvider
+          edgeCloudZoneStatus: unknown
+          edgeCloudRegion: edgeCloudRegion
+          edgeCloudZoneId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          edgeCloudZoneName: edgeCloudZoneName
+        status: unknown
+    AppZones:
+      minItems: 1
+      type: array
+      additionalProperties: false
+      description: |
+        Collection of Edge Cloud Zones where the Application Provider wants to
+        instantiate the application.
+      items:
+        $ref: '#/components/schemas/EdgeCloudZone'
+    AppManifest:
+      required:
+      - appRepo
+      - componentSpec
+      - name
+      - packageType
+      - requiredResources
+      - version
+      properties:
+        name:
+          pattern: "^[A-Za-z][A-Za-z0-9_]{1,63}$"
+          type: string
+          description: Name of the application.
+        version:
+          type: integer
+          description: Application version information
+        packageType:
+          type: string
+          description: Format of the application image package
+          enum:
+          - QCOW2
+          - OVA
+          - CONTAINER
+          - HELM
+        operatingSystem:
+          $ref: '#/components/schemas/OperatingSystem'
+        appRepo:
+          $ref: '#/components/schemas/AppManifest_appRepo'
+        requiredResources:
+          $ref: '#/components/schemas/RequiredResources'
+        componentSpec:
+          type: array
+          description: |
+            Information defined in "appRepo" point to the application
+            descriptor e.g. Helm chart, docker-compose yaml file etc.
+            The descriptor may contain one or more containers and their
+            associated meta-data. A component refers to additional details
+            about these containers to expose the instances of the containers
+            to external client applications. App provider can define one or
+            more components (via the associated network port) in componentSpec
+            corresponding to the containers in helm charts or docker-compose
+            yaml file as part of app descriptors.
+          items:
+            $ref: '#/components/schemas/AppManifest_componentSpec'
+      description: |
+        Application information and requirements provided by the
+        Application Provider
+      example:
+        name: name
+        version: 0
+        packageType: QCOW2
+        operatingSystem:
+          license: OS_LICENSE_TYPE_FREE
+          family: RHEL
+          version: OS_VERSION_UBUNTU_2204_LTS
+          architecture: x86_64
+        requiredResources:
+          memory: 10
+          numCPU: 1
+          storage: 60
+          gpu:
+          - gpuMemory: 6
+            numGPU: 1
+          - gpuMemory: 6
+            numGPU: 1
+        componentSpec:
+        - networkInterfaces:
+          - protocol: TCP
+            port: 39073
+            interfaceId: interfaceId
+            visibilityType: VISIBILITY_EXTERNAL
+          - protocol: TCP
+            port: 39073
+            interfaceId: interfaceId
+            visibilityType: VISIBILITY_EXTERNAL
+          componentName: componentName
+        - networkInterfaces:
+          - protocol: TCP
+            port: 39073
+            interfaceId: interfaceId
+            visibilityType: VISIBILITY_EXTERNAL
+          - protocol: TCP
+            port: 39073
+            interfaceId: interfaceId
+            visibilityType: VISIBILITY_EXTERNAL
+          componentName: componentName
+        appRepo:
+          credentials: credentials
+          imagePath: https://charts.bitnami.com/bitnami/helm/example-chart:0.1.0
+          checksum: checksum
+          type: PRIVATEREPO
+          userName: userName
+          authType: DOCKER
+    EdgeCloudProvider:
+      type: string
+      description: Human readable name of the Edge Cloud Provider.
+    EdgeCloudRegion:
+      type: string
+      description: |
+        Human readable name of the geographical Edge Cloud Region of
+        the Edge Cloud. Defined by the Edge Cloud Provider.
+    EdgeCloudZones:
+      minItems: 1
+      type: array
+      additionalProperties: false
+      description: |
+        A collection of Edge Cloud Zones where the Application Provider can
+        instantiate an Application Instance.
+      items:
+        $ref: '#/components/schemas/EdgeCloudZone'
+    EdgeCloudZoneId:
+      type: string
+      description: |
+        Unique identifier created by the Edge Cloud Platform to identify an
+        Edge Cloud Zone within an Edge Cloud.
+      format: uuid
+    EdgeCloudZone:
+      minItems: 1
+      type: object
+      properties:
+        edgeCloudZoneId:
+          $ref: '#/components/schemas/EdgeCloudZoneId'
+        edgeCloudZoneName:
+          $ref: '#/components/schemas/EdgeCloudZoneName'
+        edgeCloudZoneStatus:
+          $ref: '#/components/schemas/EdgeCloudZoneStatus'
+        edgeCloudProvider:
+          $ref: '#/components/schemas/EdgeCloudProvider'
+        edgeCloudRegion:
+          $ref: '#/components/schemas/EdgeCloudRegion'
+      description: |
+        An Edge Cloud Zone, uniquely identified by a
+        combination of the value of the Edge Cloud Zone Id object
+        and the value of the Edge Cloud Provider
+        object. This value is used to identify an Edge Cloud zone
+        between Edge Clouds from different Edge Cloud Providers.
+      example:
+        edgeCloudProvider: edgeCloudProvider
+        edgeCloudZoneStatus: unknown
+        edgeCloudRegion: edgeCloudRegion
+        edgeCloudZoneId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        edgeCloudZoneName: edgeCloudZoneName
+    EdgeCloudZoneName:
+      type: string
+      description: |
+        Human readable name of the geographical zone of
+        the Edge Cloud. Defined by the Edge Cloud Provider.
+    EdgeCloudZoneStatus:
+      type: string
+      description: Status of the Edge Cloud Zone (default is 'unknown')
+      default: unknown
+      enum:
+      - active
+      - inactive
+      - unknown
+    ErrorInfo:
+      required:
+      - code
+      - message
+      - status
+      type: object
+      properties:
+        status:
+          type: integer
+          description: HTTP status code returned along with this error response
+        code:
+          type: string
+          description: Code given to this error
+        message:
+          type: string
+          description: Detailed error description
+      description: Information about the error
+    Fqdn:
+      type: string
+      description: |
+        Full qualified domain name of an application instance
+    GpuInfo:
+      required:
+      - gpuMemory
+      - numGPU
+      type: object
+      properties:
+        gpuMemory:
+          type: integer
+          description: GPU memory in mega bytes
+        numGPU:
+          type: integer
+          description: Number of GPUs
+      description: Information about the supported GPUs
+      example:
+        gpuMemory: 6
+        numGPU: 1
+    Ipv4Addr:
+      type: string
+      description: |
+        IP of the device. A single IPv4 address may be specified in
+        dotted-quad form 1.2.3.4. Only this exact IP number will match the flow
+        control rule.
+      format: ipv4
+      example: 192.168.0.1
+    Ipv6Addr:
+      type: string
+      description: |
+        IP of the device. A single IPv6 address, following IETF 5952
+        format, may be specified like 2001:db8:85a3:8d3:1319:8a2e:370:7344
+      format: ipv6
+      example: 2001:db8:85a3:8d3:1319:8a2e:370:7344
+    OperatingSystem:
+      required:
+      - architecture
+      - family
+      - license
+      - version
+      type: object
+      properties:
+        architecture:
+          type: string
+          description: Type of the OS Architecture
+          example: x86_64
+          enum:
+          - x86_64
+          - x86
+        family:
+          type: string
+          description: Family to which OS belongs
+          enum:
+          - RHEL
+          - UBUNTU
+          - COREOS
+          - WINDOWS
+          - OTHER
+        version:
+          type: string
+          description: Version of the OS
+          enum:
+          - OS_VERSION_UBUNTU_2204_LTS
+          - OS_VERSION_RHEL_8
+          - OS_MS_WINDOWS_2022
+          - OTHER
+        license:
+          type: string
+          description: License needed to activate the OS
+          enum:
+          - OS_LICENSE_TYPE_FREE
+          - OS_LICENSE_TYPE_ON_DEMAND
+          - OTHER
+      description: |
+        Information about the Operating System of the application image
+      example:
+        license: OS_LICENSE_TYPE_FREE
+        family: RHEL
+        version: OS_VERSION_UBUNTU_2204_LTS
+        architecture: x86_64
+    Port:
+      minimum: 0
+      type: integer
+      description: Port to stablish the connection
+    RequiredResources:
+      required:
+      - memory
+      - numCPU
+      - storage
+      type: object
+      properties:
+        numCPU:
+          type: integer
+          description: Number of virtual CPUs
+          example: 1
+        memory:
+          type: integer
+          description: Memory in giga bytes
+          example: 10
+        storage:
+          type: integer
+          description: Storage in giga bytes
+          example: 60
+        gpu:
+          type: array
+          description: Number of GPUs
+          items:
+            $ref: '#/components/schemas/GpuInfo'
+      description: |
+        Fundamental hardware requirements to be provisioned by the
+        Application Provider.
+      example:
+        memory: 10
+        numCPU: 1
+        storage: 60
+        gpu:
+        - gpuMemory: 6
+          numGPU: 1
+        - gpuMemory: 6
+          numGPU: 1
+    SubmittedApp:
+      type: object
+      properties:
+        appId:
+          $ref: '#/components/schemas/AppId'
+      description: Information about the submitted app
+      example:
+        appId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+    Uri:
+      type: string
+      description: |
+        A Uniform Resource Identifier (URI) as per RFC 3986,
+        identifies the endpoint within an Edge Cloud Zone where the user
+        equipment may connect to the selected application instance
+      example: https://charts.bitnami.com/bitnami/helm/example-chart:0.1.0
+    inline_response_200:
+      type: object
+      properties:
+        appManifest:
+          $ref: '#/components/schemas/AppManifest'
+      example:
+        appManifest:
+          name: name
+          version: 0
+          packageType: QCOW2
+          operatingSystem:
+            license: OS_LICENSE_TYPE_FREE
+            family: RHEL
+            version: OS_VERSION_UBUNTU_2204_LTS
+            architecture: x86_64
+          requiredResources:
+            memory: 10
+            numCPU: 1
+            storage: 60
+            gpu:
+            - gpuMemory: 6
+              numGPU: 1
+            - gpuMemory: 6
+              numGPU: 1
+          componentSpec:
+          - networkInterfaces:
+            - protocol: TCP
+              port: 39073
+              interfaceId: interfaceId
+              visibilityType: VISIBILITY_EXTERNAL
+            - protocol: TCP
+              port: 39073
+              interfaceId: interfaceId
+              visibilityType: VISIBILITY_EXTERNAL
+            componentName: componentName
+          - networkInterfaces:
+            - protocol: TCP
+              port: 39073
+              interfaceId: interfaceId
+              visibilityType: VISIBILITY_EXTERNAL
+            - protocol: TCP
+              port: 39073
+              interfaceId: interfaceId
+              visibilityType: VISIBILITY_EXTERNAL
+            componentName: componentName
+          appRepo:
+            credentials: credentials
+            imagePath: https://charts.bitnami.com/bitnami/helm/example-chart:0.1.0
+            checksum: checksum
+            type: PRIVATEREPO
+            userName: userName
+            authType: DOCKER
+    inline_response_200_1:
+      minItems: 1
+      type: object
+      properties:
+        appInstaceInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppInstanceInfo'
+      example:
+        appInstaceInfo:
+        - appInstanceId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          componentEndpointInfo:
+          - interfaceId: interfaceId
+            accessPoints:
+              ipv4Addresses:
+              - 192.168.0.1
+              - 192.168.0.1
+              port: 0
+              fqdn: fqdn
+              ipv6Addresses:
+              - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+              - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+          - interfaceId: interfaceId
+            accessPoints:
+              ipv4Addresses:
+              - 192.168.0.1
+              - 192.168.0.1
+              port: 0
+              fqdn: fqdn
+              ipv6Addresses:
+              - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+              - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+          edgeCloudZone:
+            edgeCloudProvider: edgeCloudProvider
+            edgeCloudZoneStatus: unknown
+            edgeCloudRegion: edgeCloudRegion
+            edgeCloudZoneId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+            edgeCloudZoneName: edgeCloudZoneName
+          status: unknown
+        - appInstanceId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          componentEndpointInfo:
+          - interfaceId: interfaceId
+            accessPoints:
+              ipv4Addresses:
+              - 192.168.0.1
+              - 192.168.0.1
+              port: 0
+              fqdn: fqdn
+              ipv6Addresses:
+              - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+              - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+          - interfaceId: interfaceId
+            accessPoints:
+              ipv4Addresses:
+              - 192.168.0.1
+              - 192.168.0.1
+              port: 0
+              fqdn: fqdn
+              ipv6Addresses:
+              - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+              - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+          edgeCloudZone:
+            edgeCloudProvider: edgeCloudProvider
+            edgeCloudZoneStatus: unknown
+            edgeCloudRegion: edgeCloudRegion
+            edgeCloudZoneId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+            edgeCloudZoneName: edgeCloudZoneName
+          status: unknown
+    inline_response_202:
+      minItems: 1
+      type: object
+      properties:
+        appInstaces:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppInstanceInfo'
+      example:
+        appInstaces:
+        - appInstanceId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          componentEndpointInfo:
+          - interfaceId: interfaceId
+            accessPoints:
+              ipv4Addresses:
+              - 192.168.0.1
+              - 192.168.0.1
+              port: 0
+              fqdn: fqdn
+              ipv6Addresses:
+              - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+              - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+          - interfaceId: interfaceId
+            accessPoints:
+              ipv4Addresses:
+              - 192.168.0.1
+              - 192.168.0.1
+              port: 0
+              fqdn: fqdn
+              ipv6Addresses:
+              - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+              - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+          edgeCloudZone:
+            edgeCloudProvider: edgeCloudProvider
+            edgeCloudZoneStatus: unknown
+            edgeCloudRegion: edgeCloudRegion
+            edgeCloudZoneId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+            edgeCloudZoneName: edgeCloudZoneName
+          status: unknown
+        - appInstanceId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          componentEndpointInfo:
+          - interfaceId: interfaceId
+            accessPoints:
+              ipv4Addresses:
+              - 192.168.0.1
+              - 192.168.0.1
+              port: 0
+              fqdn: fqdn
+              ipv6Addresses:
+              - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+              - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+          - interfaceId: interfaceId
+            accessPoints:
+              ipv4Addresses:
+              - 192.168.0.1
+              - 192.168.0.1
+              port: 0
+              fqdn: fqdn
+              ipv6Addresses:
+              - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+              - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+          edgeCloudZone:
+            edgeCloudProvider: edgeCloudProvider
+            edgeCloudZoneStatus: unknown
+            edgeCloudRegion: edgeCloudRegion
+            edgeCloudZoneId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+            edgeCloudZoneName: edgeCloudZoneName
+          status: unknown
+    AppInstanceInfo_componentEndpointInfo:
+      required:
+      - accessPoints
+      - interfaceId
+      type: object
+      properties:
+        interfaceId:
+          pattern: "^[A-Za-z0-9][A-Za-z0-9_]{6,30}[A-Za-z0-9]$"
+          type: string
+          description: |
+            This is the interface Identifier that Application Provider
+            defines when application is being submitted.
+        accessPoints:
+          $ref: '#/components/schemas/AccessEndpoint'
+      example:
+        interfaceId: interfaceId
+        accessPoints:
+          ipv4Addresses:
+          - 192.168.0.1
+          - 192.168.0.1
+          port: 0
+          fqdn: fqdn
+          ipv6Addresses:
+          - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+          - 2001:db8:85a3:8d3:1319:8a2e:370:7344
+    AppManifest_appRepo:
+      required:
+      - imagePath
+      - type
+      type: object
+      properties:
+        type:
+          type: string
+          description: |
+            Application repository and image URI information.
+            PUBLICREPO is used of public urls like github, helm repo etc.
+            PRIVATEREPO  is used for private repo managed by the application
+            developer. Private repo can be accessed by using the app
+            developer provided userName and password. Password is
+            recommended to be the personal access token created by developer
+            e.g. in Github repo.
+          enum:
+          - PRIVATEREPO
+          - PUBLICREPO
+        imagePath:
+          $ref: '#/components/schemas/Uri'
+        userName:
+          type: string
+          description: |
+            Username to acces the Helm chart, docker-compose
+            file or VM image repository
+        credentials:
+          maxLength: 128
+          type: string
+          description: |
+            Password or personal access token created by
+            developer to acces the app repository. API users can generate
+            a personal access token e.g. docker clients to use them as
+            password.
+        authType:
+          type: string
+          description: |
+            The credentials can also be formatted as a Basic
+            auth or Bearer auth in HTTP "Authorization" header.
+          enum:
+          - DOCKER
+          - HTTP_BASIC
+          - HTTP_BEARER
+          - NONE
+        checksum:
+          type: string
+          description: |
+            MD5 checksum for VM and file-based images, sha256
+            digest for containers
+      description: |
+        Repository where Application Provider stores the application image
+      example:
+        credentials: credentials
+        imagePath: https://charts.bitnami.com/bitnami/helm/example-chart:0.1.0
+        checksum: checksum
+        type: PRIVATEREPO
+        userName: userName
+        authType: DOCKER
+    AppManifest_networkInterfaces:
+      required:
+      - interfaceId
+      - port
+      - protocol
+      - visibilityType
+      type: object
+      properties:
+        interfaceId:
+          pattern: "^[A-Za-z][A-Za-z0-9_]{3,31}$"
+          type: string
+          description: |
+            Each Port and corresponding traffic protocol
+            exposed by the component is identified by a name.
+            Application client on user device requires this to
+            uniquley idenify the interface.
+        protocol:
+          type: string
+          description: |
+            Defines the IP transport communication
+            protocol i.e., TCP, UDP or ANY
+          enum:
+          - TCP
+          - UDP
+          - ANY
+        port:
+          maximum: 65535
+          minimum: 1
+          type: integer
+          description: |
+            Port number exposed by the component.
+            Edge Cloud Provider may generate a dynamic port
+            towards the component instance which forwards
+            external traffic to the component port.
+          format: int32
+        visibilityType:
+          type: string
+          description: |
+            Defines whether the interface is exposed
+            to outer world or not i.e., external, or internal.
+            If this is set to "external", then it is  exposed
+            to external applications otherwise it is exposed
+            internally to edge application components within
+            edge cloud. When exposed to external world,
+            an external dynamic port is assigned for UC traffic
+            and mapped to the extPort
+          enum:
+          - VISIBILITY_EXTERNAL
+          - VISIBILITY_INTERNAL
+      example:
+        protocol: TCP
+        port: 39073
+        interfaceId: interfaceId
+        visibilityType: VISIBILITY_EXTERNAL
+    AppManifest_componentSpec:
+      required:
+      - componentName
+      - networkInterfaces
+      type: object
+      properties:
+        componentName:
+          type: string
+          description: Component name must be unique with an application
+        networkInterfaces:
+          minItems: 1
+          type: array
+          description: |
+            Each application component exposes some ports
+            either for external users or for inter component
+            communication.
+            Application provider is required to specify which ports are
+            to be exposed and the type of traffic that will flow through
+            these ports.The underlying platform may assign a dynamic port
+            against the "extPort" that the application clients will use
+            to connect with edge application instance.
+          items:
+            $ref: '#/components/schemas/AppManifest_networkInterfaces'
+      example:
+        networkInterfaces:
+        - protocol: TCP
+          port: 39073
+          interfaceId: interfaceId
+          visibilityType: VISIBILITY_EXTERNAL
+        - protocol: TCP
+          port: 39073
+          interfaceId: interfaceId
+          visibilityType: VISIBILITY_EXTERNAL
+        componentName: componentName
+  responses:
+    "400":
+      description: Bad request
+      headers:
+        x-correlator:
+          $ref: '#/components/headers/x-correlator'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInfo'
+          example:
+            status: 400
+            code: INVALID_ARGUMENT
+            message: Schema validation failed at  ...
+    "401":
+      description: Unauthorized
+      headers:
+        x-correlator:
+          $ref: '#/components/headers/x-correlator'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInfo'
+          example:
+            status: 401
+            code: UNAUTHENTICATED
+            message: "Authorization failed: ..."
+    "403":
+      description: Unauthorized
+      headers:
+        x-correlator:
+          $ref: '#/components/headers/x-correlator'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInfo'
+          example:
+            status: 403
+            code: PERMISSION_DENIED
+            message: "Operation not allowed: ..."
+    "404":
+      description: Not Found
+      headers:
+        x-correlator:
+          $ref: '#/components/headers/x-correlator'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInfo'
+          example:
+            status: 404
+            code: NOT_FOUND
+            message: Resource does not exist
+    "500":
+      description: Internal Server Error
+      headers:
+        x-correlator:
+          $ref: '#/components/headers/x-correlator'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInfo'
+          example:
+            status: 500
+            code: INTERNAL
+            message: "Internal server error: ..."
+    "501":
+      description: Not Implemented
+      headers:
+        x-correlator:
+          $ref: '#/components/headers/x-correlator'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInfo'
+          example:
+            status: 501
+            code: NOT_IMPLEMENTED
+            message: Service not implemented
+    "503":
+      description: Service Unavailable
+      headers:
+        x-correlator:
+          $ref: '#/components/headers/x-correlator'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInfo'
+          example:
+            status: 503
+            code: UNAVAILABLE
+            message: Service unavailable
+  parameters:
+    x-correlator:
+      name: x_correlator
+      in: header
+      description: |
+        Correlation id for the different services
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: string
+  headers:
+    x-correlator:
+      description: |
+        Correlation id for the different services
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: string
+        format: uuid
+  # securitySchemes:
+  #   openId:
+  #     type: openIdConnect
+  #     description: OpenID Provider Configuration Information.
+  #     openIdConnectUrl: https://example.com/.well-known/openid-configuration
+
