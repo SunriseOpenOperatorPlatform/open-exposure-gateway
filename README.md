@@ -13,6 +13,13 @@ Before running the server you need to `mv env.sample .env` and update variables 
 
 To run the server, please execute the following from the root directory:
 
+Using uv: 
+```bash
+# run the server as module - uv will automatically take care of any dependencies installation
+uv run src/capabilities_exposure_api
+```
+
+Using pip:
 ```
 pip3 install -r requirements.txt
 python3 -m swagger_server

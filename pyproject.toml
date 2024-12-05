@@ -1,0 +1,30 @@
+[project]
+name = "capabilities-exposure-api"
+version = "0.1.0"
+description = """The SUNRISE-6G Capabilities Exposure API enables Application Providers to manage the Life Cycle of Edge Deployed Applications and Edge Cloud Zones discovery.
+The service implements the CAMARA Edge Application Management API."""
+readme = "README.md"
+authors = [
+    { name = "Karagkounis Dimitris", email = "dkaragkounis@intracom-telecom.com" },
+]
+requires-python = ">=3.12"
+dependencies = [
+    "connexion[flask,swagger-ui,uvicorn]>=3.1.0",
+    "flask-pymongo>=2.3.0",
+    "flask>=3.1.0",
+    "pydantic>=2.10.3",
+    "ruff>=0.8.1",
+]
+
+[project.scripts]
+capabilities-exposure-api = "capabilities_exposure_api:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "hatchling>=1.26.3",
+    "ruff>=0.8.1",
+]
