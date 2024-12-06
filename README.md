@@ -18,29 +18,13 @@ Using uv:
 # run the server as module - uv will automatically take care of any dependencies installation
 uv run src/capabilities_exposure_api
 ```
+and open your browser to the OpenAPI documentation: `http://127.0.0.1:8080/docs/`
 
-Using pip:
-```
-pip3 install -r requirements.txt
-python3 -m swagger_server
-```
-
-and open your browser to the OpenAPI documentation:
-
-```
-http://localhost:8080/edge-application-management/ui/
-```
-
-Your OpenAPI definition lives here:
-
-```
-http://localhost:8080/edge-application-management/openapi.json
-```
+### Testing
 
 To launch the integration tests, use tox:
-```
-sudo pip install tox
-tox
+```bash
+uv run tox
 ```
 
 ### Running with Docker
@@ -49,8 +33,8 @@ To run the server on a Docker container, please execute the following from the r
 
 ```bash
 # building the image
-docker build -t swagger_server .
+docker build -t edge_cloud_management_api .
 
 # starting up a container
-docker run -p 8080:8080 swagger_server
+docker run -p 8080:8080 edge_cloud_management_api
 ```
