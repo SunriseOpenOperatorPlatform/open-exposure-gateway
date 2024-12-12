@@ -16,7 +16,7 @@ To run the server, please execute the following from the root directory:
 Using uv: 
 ```bash
 # run the server as module - uv will automatically take care of any dependencies installation
-uv run src/capabilities_exposure_api
+uv run edge_cloud_management_api
 ```
 and open your browser to the OpenAPI documentation: `http://127.0.0.1:8080/docs/`
 
