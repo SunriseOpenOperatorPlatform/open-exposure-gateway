@@ -9,8 +9,9 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "connexion[flask,swagger-ui,uvicorn]>=3.1.0",
-    "flask-pymongo>=2.3.0",
     "pydantic>=2.10.3",
+    "pymongo>=4.10.1",
+    "requests>=2.32.3",
 ]
 
 [project.scripts]

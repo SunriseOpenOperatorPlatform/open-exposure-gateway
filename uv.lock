@@ -178,8 +178,9 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "connexion", extra = ["flask", "swagger-ui", "uvicorn"] },
-    { name = "flask-pymongo" },
     { name = "pydantic" },
+    { name = "pymongo" },
+    { name = "requests" },
 ]
 
 [package.dev-dependencies]
@@ -191,8 +192,9 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "connexion", extras = ["flask", "swagger-ui", "uvicorn"], specifier = ">=3.1.0" },
-    { name = "flask-pymongo", specifier = ">=2.3.0" },
     { name = "pydantic", specifier = ">=2.10.3" },
+    { name = "pymongo", specifier = ">=4.10.1" },
+    { name = "requests", specifier = ">=2.32.3" },
 ]
 
 [package.metadata.requires-dev]
@@ -220,19 +222,6 @@ wheels = [
 [package.optional-dependencies]
 async = [
     { name = "asgiref" },
-]
-
-[[package]]
-name = "flask-pymongo"
-version = "2.3.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "flask" },
-    { name = "pymongo" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/d9/14/6e714ad96666d1c626aacaad3a368318ba421b1e0cedaf62507444ede0f9/Flask-PyMongo-2.3.0.tar.gz", hash = "sha256:620eb02dc8808a5fcb90f26cab6cba9d6bf497b15032ae3ca99df80366e33314", size = 23740 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/67/b8/0322016b9ce09a64fba9018211e7c35fd51380527ffd9ea248744f389239/Flask_PyMongo-2.3.0-py2.py3-none-any.whl", hash = "sha256:8a9577a2c6d00b49f21cb5a5a8d72561730364a2d745551a85349ab02f86fc73", size = 12104 },
 ]
 
 [[package]]
