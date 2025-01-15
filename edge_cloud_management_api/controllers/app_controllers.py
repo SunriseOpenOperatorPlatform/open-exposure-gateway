@@ -1,8 +1,8 @@
 from flask import jsonify
 
-# from database import mongo
 from pydantic import ValidationError
-from edge_cloud_management_api.models.application_models import AppManifest
+
+# from edge_cloud_management_api.models.application_models import AppManifest
 
 
 def submit_app(body: dict):
@@ -11,7 +11,7 @@ def submit_app(body: dict):
     """
     try:
         # Validate the input data using Pydantic
-        validated_data = AppManifest(**body)
+        # validated_data = AppManifest(**body)
 
         # Insert into MongoDB
         # app_id = mongo.db.applications.insert_one(validated_data.dict()).inserted_id
