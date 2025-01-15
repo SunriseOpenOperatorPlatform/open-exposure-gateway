@@ -14,3 +14,9 @@ wheels/
 
 # code editors
 .vscode/
+
+.tox/
+htmlcov/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
