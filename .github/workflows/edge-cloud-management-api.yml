@@ -1,6 +1,13 @@
 name: Edge Cloud Management API
 
-on: [push]
+on:
+  push:
+    branches:
+      - "main"
+      - "releases/**"
+  pull_request:
+    types: [opened, reopened]
+    branches: ["main"]
 
 jobs:
   test:

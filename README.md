@@ -1,4 +1,4 @@
-# Capabilities Exposure API Server
+# Capabilities Exposure API
 
 A Server Implementation of the **CAMARA Edge Application Management API** as specified [here](https://github.com/camaraproject/EdgeCloud/blob/main/code/API_definitions/Edge-Application-Management.yaml)
 
