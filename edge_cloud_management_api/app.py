@@ -3,7 +3,7 @@ from connexion import FlaskApp
 from connexion.options import SwaggerUIOptions
 
 
-def main():
+def get_app_instance() -> FlaskApp:
     file_path = Path(__file__).resolve().parent
     swagger_options = SwaggerUIOptions(swagger_ui_path="/docs")
     app = FlaskApp(__name__, specification_dir=file_path / "specification")
@@ -12,8 +12,9 @@ def main():
         swagger_ui_options=swagger_options,
         strict_validation=True,
     )
-    app.run(host="127.0.0.1", port=8080)
+    return app
 
 
 if __name__ == "__main__":
-    main()
+    app = get_app_instance()
+    app.run(host="127.0.0.1", port=8080)
