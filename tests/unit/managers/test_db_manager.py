@@ -46,25 +46,17 @@ class TestMongoManager:
         """
         Test the insert_document method.
         """
-        inserted_id = mock_mongo_manager.insert_document(
-            "test_collection", {"name": "Test User", "email": "test@example.com"}
-        )
+        inserted_id = mock_mongo_manager.insert_document("test_collection", {"name": "Test User", "email": "test@example.com"})
         assert inserted_id is not None
-        result = mock_mongo_manager.find_document(
-            "test_collection", {"_id": inserted_id}
-        )
+        result = mock_mongo_manager.find_document("test_collection", {"_id": inserted_id})
         assert result["name"] == "Test User"
 
     def test_find_document(self, mock_mongo_manager):
         """
         Test the find_document method.
         """
-        mock_mongo_manager.insert_document(
-            "test_collection", {"name": "Test User", "email": "test@example.com"}
-        )
-        result = mock_mongo_manager.find_document(
-            "test_collection", {"name": "Test User"}
-        )
+        mock_mongo_manager.insert_document("test_collection", {"name": "Test User", "email": "test@example.com"})
+        result = mock_mongo_manager.find_document("test_collection", {"name": "Test User"})
         assert result is not None
         assert result["email"] == "test@example.com"
 
@@ -72,12 +64,8 @@ class TestMongoManager:
         """
         Test the find_documents method.
         """
-        mock_mongo_manager.insert_document(
-            "test_collection", {"name": "User 1", "email": "user1@example.com"}
-        )
-        mock_mongo_manager.insert_document(
-            "test_collection", {"name": "User 2", "email": "user2@example.com"}
-        )
+        mock_mongo_manager.insert_document("test_collection", {"name": "User 1", "email": "user1@example.com"})
+        mock_mongo_manager.insert_document("test_collection", {"name": "User 2", "email": "user2@example.com"})
         results = mock_mongo_manager.find_documents("test_collection", {})
         assert len(list(results)) == 2
 
@@ -85,48 +73,32 @@ class TestMongoManager:
         """
         Test the update_document method.
         """
-        inserted_id = mock_mongo_manager.insert_document(
-            "test_collection", {"name": "User", "email": "user@example.com"}
-        )
-        update_count = mock_mongo_manager.update_document(
-            "test_collection", {"_id": inserted_id}, {"name": "Updated User"}
-        )
+        inserted_id = mock_mongo_manager.insert_document("test_collection", {"name": "User", "email": "user@example.com"})
+        update_count = mock_mongo_manager.update_document("test_collection", {"_id": inserted_id}, {"name": "Updated User"})
         assert update_count == 1
-        result = mock_mongo_manager.find_document(
-            "test_collection", {"_id": inserted_id}
-        )
+        result = mock_mongo_manager.find_document("test_collection", {"_id": inserted_id})
         assert result["name"] == "Updated User"
 
     def test_delete_document(self, mock_mongo_manager):
         """
         Test the delete_document method.
         """
-        inserted_id = mock_mongo_manager.insert_document(
-            "test_collection", {"name": "User", "email": "user@example.com"}
-        )
-        delete_count = mock_mongo_manager.delete_document(
-            "test_collection", {"_id": inserted_id}
-        )
+        inserted_id = mock_mongo_manager.insert_document("test_collection", {"name": "User", "email": "user@example.com"})
+        delete_count = mock_mongo_manager.delete_document("test_collection", {"_id": inserted_id})
         assert delete_count == 1
-        result = mock_mongo_manager.find_document(
-            "test_collection", {"_id": inserted_id}
-        )
+        result = mock_mongo_manager.find_document("test_collection", {"_id": inserted_id})
         assert result is None
 
     def test_update_nonexistent_document(self, mock_mongo_manager):
         """
         Test updating a nonexistent document.
         """
-        update_count = mock_mongo_manager.update_document(
-            "test_collection", {"name": "Nonexistent"}, {"name": "Updated"}
-        )
+        update_count = mock_mongo_manager.update_document("test_collection", {"name": "Nonexistent"}, {"name": "Updated"})
         assert update_count == 0
 
     def test_delete_nonexistent_document(self, mock_mongo_manager):
         """
         Test deleting a nonexistent document.
         """
-        delete_count = mock_mongo_manager.delete_document(
-            "test_collection", {"name": "Nonexistent"}
-        )
+        delete_count = mock_mongo_manager.delete_document("test_collection", {"name": "Nonexistent"})
         assert delete_count == 0

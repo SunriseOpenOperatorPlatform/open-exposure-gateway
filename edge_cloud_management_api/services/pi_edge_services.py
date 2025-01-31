@@ -81,14 +81,10 @@ class PiEdgeAPIClient:
             raise ValueError("Unexpected response from Pi Edge Server")
 
         except Timeout:
-            return {
-                "error": "The request to the external API timed out. Please try again later."
-            }
+            return {"error": "The request to the external API timed out. Please try again later."}
 
         except ConnectionError:
-            return {
-                "error": "Failed to connect to the external API service. Service might be unavailable."
-            }
+            return {"error": "Failed to connect to the external API service. Service might be unavailable."}
 
         except requests.exceptions.HTTPError as http_err:
             return {
@@ -108,19 +104,13 @@ class PiEdgeAPIClient:
         """
         url = f"{self.base_url}/deployedServiceFunction"
         try:
-            response = self.requests_session.post(
-                url, json=data, headers=self._get_headers()
-            )
+            response = self.requests_session.post(url, json=data, headers=self._get_headers())
             response.raise_for_status()
         except Timeout:
-            return {
-                "error": "The request to the external API timed out. Please try again later."
-            }
+            return {"error": "The request to the external API timed out. Please try again later."}
 
         except ConnectionError:
-            return {
-                "error": "Failed to connect to the external API service. Service might be unavailable."
-            }
+            return {"error": "Failed to connect to the external API service. Service might be unavailable."}
 
         except requests.exceptions.HTTPError as http_err:
             return {
@@ -146,14 +136,10 @@ class PiEdgeAPIClient:
             return nodes
 
         except Timeout:
-            return {
-                "error": "The request to the external API timed out. Please try again later."
-            }
+            return {"error": "The request to the external API timed out. Please try again later."}
 
         except ConnectionError:
-            return {
-                "error": "Failed to connect to the external API service. Service might be unavailable."
-            }
+            return {"error": "Failed to connect to the external API service. Service might be unavailable."}
 
         except requests.exceptions.HTTPError as http_err:
             return {
@@ -201,7 +187,6 @@ class PiEdgeAPIClientFactory:
 
 
 if __name__ == "__main__":
-
     pi_edge_factory = PiEdgeAPIClientFactory()
     api_client = pi_edge_factory.create_pi_edge_api_client()
 

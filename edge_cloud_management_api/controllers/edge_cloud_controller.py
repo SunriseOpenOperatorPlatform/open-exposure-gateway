@@ -4,9 +4,7 @@ from typing import List
 
 
 class EdgeCloudZone(BaseModel):
-    edgeCloudZoneId: str = Field(
-        ..., description="Unique identifier of the Edge Cloud Zone"
-    )
+    edgeCloudZoneId: str = Field(..., description="Unique identifier of the Edge Cloud Zone")
     edgeCloudZoneName: str = Field(..., description="Name of the Edge Cloud Zone")
     edgeCloudZoneStatus: str = Field(
         ...,
@@ -66,14 +64,7 @@ def get_edge_cloud_zones(x_correlator=None, region=None, status=None):  # noqa: 
         filtered_zones = [
             zone
             for zone in get_all_cloud_zones()
-            if (
-                (query_params.region is None)
-                or (zone["edgeCloudRegion"] == query_params.region)
-            )
-            and (
-                (query_params.status is None)
-                or (zone["edgeCloudZoneStatus"] == query_params.status)
-            )
+            if ((query_params.region is None) or (zone["edgeCloudRegion"] == query_params.region)) and ((query_params.status is None) or (zone["edgeCloudZoneStatus"] == query_params.status))
         ]
         response = [EdgeCloudZone(**zone).model_dump() for zone in filtered_zones]
         return jsonify(response), 200

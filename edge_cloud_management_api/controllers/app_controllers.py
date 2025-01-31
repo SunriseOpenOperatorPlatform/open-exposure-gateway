@@ -17,9 +17,7 @@ def submit_app(body: dict):
         # app_id = mongo.db.applications.insert_one(validated_data.dict()).inserted_id
         app_id = 3
         return (
-            jsonify(
-                {"message": "Application submitted successfully!", "appId": str(app_id)}
-            ),
+            jsonify({"message": "Application submitted successfully!", "appId": str(app_id)}),
             201,
         )
 
@@ -107,9 +105,7 @@ def create_app_instance(body, app_id, x_correlator=None):  # noqa: E501
         return error, 500
 
 
-def get_app_instance(
-    app_id, x_correlator=None, app_instance_id=None, region=None
-):  # noqa: E501
+def get_app_instance(app_id, x_correlator=None, app_instance_id=None, region=None):  # noqa: E501
     """Retrieve the information of Application Instances for a given App
 
     Ask the Edge Cloud Provider the information of the instances for a given application  # noqa: E501

@@ -65,9 +65,7 @@ class ComponentEndpointInfo(BaseModel):
 
 class AppInstanceInfo(BaseModel):
     appInstanceId: UUID4  # str = Field(..., regex=r"^[0-9a-fA-F-]{36}$")
-    status: AppInstanceStatus = (
-        AppInstanceStatus.unknown
-    )  # [ ready, instantiating, failed, terminating, unknown ]
+    status: AppInstanceStatus = AppInstanceStatus.unknown  # [ ready, instantiating, failed, terminating, unknown ]
     componentEndpointInfo: List[ComponentEndpointInfo]
     kubernetesClusterRef: Optional[UUID4]
     edgeCloudZone: EdgeCloudZone
@@ -91,9 +89,7 @@ class AppRepo(BaseModel):
     userName: Optional[str]
     credentials: Optional[str]  # maxLength: 128
     authType: Optional[AppRepoAuthType]
-    checksum: Optional[
-        str
-    ]  # MD5 checksum for VM and file-based images, sha256 digest for containers
+    checksum: Optional[str]  # MD5 checksum for VM and file-based images, sha256 digest for containers
 
 
 class RequiredResources(BaseModel):
@@ -233,9 +229,7 @@ class RequiredResources(BaseModel):
         addons: Optional[K8sAddons]
 
     class VmResources(BaseModel):
-        infraKind: str = Field(
-            ..., description="Type of infrastructure: Virtual Machine"
-        )
+        infraKind: str = Field(..., description="Type of infrastructure: Virtual Machine")
         numCPU: int
         memory: int  # in MB
         additionalStorages: Optional[List[AdditionalStorage]]
@@ -249,17 +243,13 @@ class RequiredResources(BaseModel):
         gpu: Optional[GpuInfo]
 
     class DockerComposeResources(BaseModel):
-        infraKind: str = Field(
-            ..., description="Type of infrastructure: Docker Compose"
-        )
+        infraKind: str = Field(..., description="Type of infrastructure: Docker Compose")
         numCPU: int
         memory: int  # in MB
         storage: Optional[AdditionalStorage]
         gpu: Optional[GpuInfo]
 
-    __root__: Union[
-        KubernetesResources, VmResources, ContainerResources, DockerComposeResources
-    ]
+    __root__: Union[KubernetesResources, VmResources, ContainerResources, DockerComposeResources]
 
 
 # class ComponentSpec(BaseModel):
@@ -298,18 +288,12 @@ class NetworkInterface(BaseModel):
         description="Unique identifier for the network interface.",
     )
     protocol: Protocol = Field(..., description="IP transport communication protocol.")
-    port: int = Field(
-        ..., ge=1, le=65535, description="Port number exposed by the component."
-    )
-    visibilityType: VisibilityType = Field(
-        ..., description="Defines whether the interface is external or internal."
-    )
+    port: int = Field(..., ge=1, le=65535, description="Port number exposed by the component.")
+    visibilityType: VisibilityType = Field(..., description="Defines whether the interface is external or internal.")
 
 
 class ComponentSpec(BaseModel):
-    componentName: str = Field(
-        ..., description="Unique name for the component within the application."
-    )
+    componentName: str = Field(..., description="Unique name for the component within the application.")
     networkInterfaces: List[NetworkInterface] = Field(
         ...,
         min_items=1,
