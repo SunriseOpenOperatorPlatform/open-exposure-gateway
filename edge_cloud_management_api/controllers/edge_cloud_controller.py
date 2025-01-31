@@ -40,7 +40,7 @@ def get_all_cloud_zones() -> List[EdgeCloudZone]:
     return get_local_zones() + get_federated_zones()
 
 
-def get_edge_cloud_zones(x_correlator=None, region=None, status=None):  # noqa: E501
+def get_edge_cloud_zones(x_correlator: str | None = None, region=None, status=None):  # noqa: E501
     """Retrieve a list of the operators Edge Cloud Zones and their status
 
     List of the operators Edge Cloud Zones and their status, ordering the results by location and filtering by status (active/inactive/unknown)  # noqa: E501
@@ -48,11 +48,11 @@ def get_edge_cloud_zones(x_correlator=None, region=None, status=None):  # noqa: 
     :param x_correlator: Correlation id for the different services
     :type x_correlator: str
     :param region: Human readable name of the geographical Edge Cloud Region of the Edge Cloud. Defined by the Edge Cloud Provider.
-    :type region: dict | bytes
+    :type region: str
     :param status: Human readable status of the Edge Cloud Zone
-    :type status: dict | bytes
+    :type status: str
 
-    :rtype: EdgeCloudZones
+    :rtype: list[EdgeCloudZone]
     """
     try:
         query_params = EdgeCloudQueryParams(
@@ -61,11 +61,15 @@ def get_edge_cloud_zones(x_correlator=None, region=None, status=None):  # noqa: 
             status=status,
         )
 
-        filtered_zones = [
-            zone
-            for zone in get_all_cloud_zones()
-            if ((query_params.region is None) or (zone["edgeCloudRegion"] == query_params.region)) and ((query_params.status is None) or (zone["edgeCloudZoneStatus"] == query_params.status))
-        ]
+        def query_region_matches(zone: str) -> bool:
+            """If region is None, return True (don't apply region filtering), otherwise check if the zone region matches the query region"""
+            return query_params.region is None or zone["edgeCloudRegion"] == query_params.region
+
+        def query_status_matches(zone: str) -> bool:
+            """If status is None, return True (don't apply status filtering), otherwise check if the zone status matches the query status"""
+            return (query_params.status is None) or (zone["edgeCloudZoneStatus"] == query_params.status)
+
+        filtered_zones = [zone for zone in get_all_cloud_zones() if (query_region_matches(zone) and query_status_matches(zone))]
         response = [EdgeCloudZone(**zone).model_dump() for zone in filtered_zones]
         return jsonify(response), 200
 

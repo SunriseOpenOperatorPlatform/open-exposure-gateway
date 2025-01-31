@@ -1,8 +1,8 @@
 from flask import jsonify
 
 from pydantic import ValidationError
-
-# from edge_cloud_management_api.models.application_models import AppManifest
+from edge_cloud_management_api.managers.log_manager import logger
+from edge_cloud_management_api.models.application_models import AppManifest
 
 
 def submit_app(body: dict):
@@ -11,7 +11,7 @@ def submit_app(body: dict):
     """
     try:
         # Validate the input data using Pydantic
-        # validated_data = AppManifest(**body)
+        validated_data = AppManifest(**body)
 
         # Insert into MongoDB
         # app_id = mongo.db.applications.insert_one(validated_data.dict()).inserted_id
@@ -96,7 +96,8 @@ def create_app_instance(body, app_id, x_correlator=None):  # noqa: E501
     """
     try:
         return {}, 202  # application instantiation accepted
-    except:
+    except Exception:
+        logger.exception("Error while creating app instance")
         error = {
             "status": 500,
             "code": "INTERNAL",

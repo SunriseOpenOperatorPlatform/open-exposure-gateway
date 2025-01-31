@@ -1,17 +1,12 @@
 import requests
-from edge_cloud_management_api.configs.logger_config import logger
+from edge_cloud_management_api.managers.log_manager import logger
 from requests.exceptions import Timeout, ConnectionError
-from edge_cloud_management_api.configs.env_config import (
-    PI_EDGE_BASE_URL,
-    PI_EDGE_PASSWORD,
-    PI_EDGE_USERNAME,
-    HTTP_PROXY,
-)
+from edge_cloud_management_api.configs.env_config import Config
 
 
 proxies = {
-    "http": HTTP_PROXY,
-    "https": HTTP_PROXY,
+    "http": Config.HTTP_PROXY,
+    "https": Config.HTTP_PROXY,
 }
 
 
@@ -160,9 +155,9 @@ class PiEdgeAPIClientFactory:
     """
 
     def __init__(self):
-        self.default_base_url = PI_EDGE_BASE_URL
-        self.default_username = PI_EDGE_USERNAME
-        self.default_password = PI_EDGE_PASSWORD
+        self.default_base_url = Config.PI_EDGE_BASE_URL
+        self.default_username = Config.PI_EDGE_USERNAME
+        self.default_password = Config.PI_EDGE_PASSWORD
 
     def create_pi_edge_api_client(self, base_url=None, username=None, password=None):
         """
