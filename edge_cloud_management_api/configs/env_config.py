@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-class Config(BaseSettings):
+class Configuration(BaseSettings):
     MONGO_URI: str = os.getenv("MONGO_URI")
     PI_EDGE_BASE_URL: str = os.getenv("PI_EDGE_BASE_URL")
     PI_EDGE_USERNAME: str = os.getenv("PI_EDGE_USERNAME")
@@ -13,4 +13,4 @@ class Config(BaseSettings):
     HTTP_PROXY: str = os.getenv("HTTP_PROXY")
 
 
-# config = Config()
+config = Configuration()

@@ -19,7 +19,7 @@ def mock_mongo_manager():
     Fixture to provide a MongoManager instance with a mocked MongoDB client.
     """
 
-    with patch("edge_cloud_management_api.managers.db_manager.Config", new=TestConfig):
+    with patch("edge_cloud_management_api.managers.db_manager.config", new=TestConfig):
         with patch(
             "edge_cloud_management_api.managers.db_manager.MongoClient",
             new=mongomock.MongoClient,

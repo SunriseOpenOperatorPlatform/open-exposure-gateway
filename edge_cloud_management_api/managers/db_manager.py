@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-from edge_cloud_management_api.configs.env_config import Config
+from edge_cloud_management_api.configs.env_config import config
 
 
 class MongoManager:
@@ -25,8 +25,8 @@ class MongoManager:
         """
         Initializes the MongoDB connection using the URI from Config.
         """
-        self.client = MongoClient(Config.MONGO_URI, maxPoolSize=50)
-        mongo_db_name: str = Config.MONGO_URI.split("/")[-1]
+        self.client = MongoClient(config.MONGO_URI, maxPoolSize=50)
+        mongo_db_name: str = config.MONGO_URI.split("/")[-1]
         self.db = self.client[mongo_db_name]
 
     def __enter__(self):
