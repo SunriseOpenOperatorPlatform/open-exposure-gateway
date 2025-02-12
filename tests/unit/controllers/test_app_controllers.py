@@ -39,11 +39,28 @@ def mock_get_all_cloud_zones():
         yield mock_function
 
 
+example_submit_input = {
+    "name": "etO2zndyzpL1P",
+    "appProvider": "TBPhbx4MO6n",
+    "version": "string",
+    "packageType": "QCOW2",
+    "operatingSystem": {"architecture": "x86_64", "family": "RHEL", "version": "OS_VERSION_UBUNTU_2204_LTS", "license": "OS_LICENSE_TYPE_FREE"},
+    "appRepo": {
+        "type": "PRIVATEREPO",
+        "imagePath": "https://charts.bitnami.com/bitnami/helm/example-chart:0.1.0",
+        "userName": "string",
+        "credentials": "string",
+        "authType": "DOCKER",
+        "checksum": "string",
+    },
+    "requiredResources": {},
+    "componentSpec": [{"componentName": "string", "networkInterfaces": [{"interfaceId": "zKJ9YWHujxe73gorEzEImKfr6", "protocol": "TCP", "port": 65535, "visibilityType": "VISIBILITY_EXTERNAL"}]}],
+}
+
+
 @pytest.mark.parametrize(
     "x_correlator, body, expected_response_status, expected_response_body",
-    [
-        (None, {}, 201, {"appId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"}),
-    ],
+    [(None, example_submit_input, 201, {"appId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"})],
 )
 def test_submit_app(
     x_correlator,
@@ -57,12 +74,13 @@ def test_submit_app(
     Test the get_edge_cloud_zones controller.
     """
     with test_app.test_request_context():
-        response, response_status = submit_app(x_correlator, body)
+        response, response_status = submit_app(body)
         assert response_status == expected_response_status
         if expected_response_status == 400:
             assert response.json["code"] == "VALIDATION_ERROR"
-        # elif expected_response_status == 201:
-        #     assert len(response.json) == expected_count
-        #     mock_get_all_cloud_zones.assert_called_once()
+        elif expected_response_status == 201:
+            assert "appId" in response.json
+            # assert len(response.json) == expected_count
+            # mock_get_all_cloud_zones.assert_called_once()
         else:
             assert False

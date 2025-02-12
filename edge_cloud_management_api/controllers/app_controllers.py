@@ -1,6 +1,8 @@
+import uuid
 from flask import jsonify
 
 from pydantic import ValidationError
+from edge_cloud_management_api.managers.db_manager import MongoManager
 from edge_cloud_management_api.managers.log_manager import logger
 from edge_cloud_management_api.models.application_models import AppManifest
 
@@ -12,14 +14,15 @@ def submit_app(body: dict):
     try:
         # Validate the input data using Pydantic
         validated_data = AppManifest(**body)
-
+        validated_data_dict = validated_data.model_dump(mode="json")
+        validated_data_dict["_id"] = str(uuid.uuid4())
         # Insert into MongoDB
-        # app_id = mongo.db.applications.insert_one(validated_data.dict()).inserted_id
-        app_id = 3
-        return (
-            jsonify({"message": "Application submitted successfully!", "appId": str(app_id)}),
-            201,
-        )
+        with MongoManager() as db:
+            document_id = db.insert_document("apps", validated_data_dict)
+            return (
+                jsonify({"appId": str(document_id)}),
+                201,
+            )
 
     except ValidationError as e:
         return jsonify({"error": "Invalid input", "details": e.errors()}), 400

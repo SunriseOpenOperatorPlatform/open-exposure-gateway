@@ -1,7 +1,7 @@
-from pydantic import UUID4, BaseModel, HttpUrl, Field
-from typing import List, Optional
-from ipaddress import IPv4Address, IPv6Address
+from pydantic import BaseModel, HttpUrl, Field  # , UUID4
+from typing import Any, List, Optional
 from enum import Enum
+# from ipaddress import IPv4Address, IPv6Address
 
 # from edge_cloud_management_api.models.edge_cloud_models import EdgeCloudZone
 
@@ -105,14 +105,14 @@ class AppManifest(BaseModel):
         memory: int
         storage: int
 
-    appId: Optional[UUID4]
+    # appId: Optional[UUID4]
     name: str = Field(..., pattern="^[A-Za-z][A-Za-z0-9_]{1,63}$")
     appProvider: str = Field(..., pattern="^[A-Za-z][A-Za-z0-9_]{7,63}$")
     version: str  # application version
     packageType: PackageType
     operatingSystem: Optional[OperatingSystem]
     appRepo: AppRepo
-    requiredResources: RequiredResources
+    requiredResources: Any  # Optional[RequiredResources]
     componentSpec: List[ComponentSpec]
 
 
