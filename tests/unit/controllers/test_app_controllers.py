@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 from flask import Flask
 from edge_cloud_management_api.app import get_app_instance
-from edge_cloud_management_api.controllers.app_controllers import submit_app, get_app
+from edge_cloud_management_api.controllers.app_controllers import submit_app, get_apps, get_app
 
 
 @pytest.fixture
@@ -71,7 +71,7 @@ def test_submit_app(
     test_app: Flask,
 ):
     """
-    Test the get_edge_cloud_zones controller.
+    Test the submit_app controller.
     """
     with test_app.test_request_context():
         response, response_status = submit_app(body)
@@ -84,3 +84,24 @@ def test_submit_app(
             # mock_get_all_cloud_zones.assert_called_once()
         else:
             assert False
+
+
+@pytest.mark.parametrize(
+    "x_correlator, expected_response_status",
+    [(None, 200)],
+)
+def test_get_apps(
+    x_correlator,
+    expected_response_status,
+    test_app: Flask,
+):
+    """
+    Test the get_apps controller.
+    """
+    with test_app.test_request_context():
+        response, response_status = get_apps(x_correlator)
+        assert response_status == expected_response_status
+        # if expected_response_status == 200:
+        #     assert "appId" in response.json
+        # else:
+        #     assert False

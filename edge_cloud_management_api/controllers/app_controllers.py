@@ -35,20 +35,23 @@ def submit_app(body: dict):
 
 
 def get_apps(x_correlator=None):  # noqa: E501
-    """Retrieve the information of an Application
+    """Retrieve metadata information of all applications"""
+    try:
+        with MongoManager() as db:
+            documents_cursor = db.find_documents("apps", {})
+            response_apps = list()
+            for document in documents_cursor:
+                document["appId"] = document["_id"]
+                del document["_id"]
+                response_apps.append(document)
 
-    Ask the Edge Cloud Provider the information for a given application  # noqa: E501
+            return (jsonify(response_apps), 200)
 
-    :param app_id: A globally unique identifier associated with the application. Edge Cloud Provider generates this identifier when the application is submitted.
-    :type app_id: dict | bytes
-    :param x_correlator: Correlation id for the different services
-    :type x_correlator: str
-
-    :rtype: InlineResponse200
-    """
-    # if connexion.request.is_json:
-    #     app_id = AppId.from_dict(connexion.request.get_json())  # noqa: E501
-    return "do some magic!"
+    except Exception as e:
+        return (
+            jsonify({"error": "An unexpected error occurred", "details": str(e)}),
+            500,
+        )
 
 
 def get_app(appId, x_correlator=None):  # noqa: E501
