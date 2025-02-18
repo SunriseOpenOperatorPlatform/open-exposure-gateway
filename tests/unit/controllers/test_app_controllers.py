@@ -15,21 +15,6 @@ def test_app():
     return flask_app.app
 
 
-@pytest.mark.parametrize(
-    "app_id, x_correlator, expected",
-    [
-        (1, None, "do some magic!"),
-        (2, "123", "do some magic!"),
-    ],
-)
-def test_get_app(app_id, x_correlator, expected):
-    """
-    Test the get_app controller.
-    """
-    result = get_app(app_id, x_correlator)
-    assert result == expected
-
-
 @pytest.fixture
 def mock_get_all_cloud_zones():
     with patch(
@@ -105,3 +90,24 @@ def test_get_apps(
         #     assert "appId" in response.json
         # else:
         #     assert False
+
+
+@pytest.mark.parametrize(
+    "x_correlator, app_id, expected_response_status",
+    [
+        (None, "e343569e-e92c-4adc-9719-468b3b00a9d3", 200),
+        (None, "e343569e-192c-4adc-9719-468b3b00a9d3", 404),
+    ],
+)
+def test_get_app(
+    x_correlator,
+    app_id,
+    expected_response_status,
+    test_app: Flask,
+):
+    """
+    Test the get_app controller.
+    """
+    with test_app.test_request_context():
+        response, response_status = get_app(appId=app_id, x_correlator=x_correlator)
+        assert response_status == expected_response_status

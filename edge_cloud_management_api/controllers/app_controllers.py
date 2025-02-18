@@ -7,6 +7,10 @@ from edge_cloud_management_api.managers.log_manager import logger
 from edge_cloud_management_api.models.application_models import AppManifest
 
 
+class NotFound404Exception(Exception):
+    pass
+
+
 def submit_app(body: dict):
     """
     Controller for submitting application metadata.
@@ -55,20 +59,30 @@ def get_apps(x_correlator=None):  # noqa: E501
 
 
 def get_app(appId, x_correlator=None):  # noqa: E501
-    """Retrieve the information of an Application
-
-    Ask the Edge Cloud Provider the information for a given application  # noqa: E501
-
-    :param appId: A globally unique identifier associated with the application. Edge Cloud Provider generates this identifier when the application is submitted.
-    :type appId: dict | bytes
-    :param x_correlator: Correlation id for the different services
-    :type x_correlator: str
-
-    :rtype: InlineResponse200
-    """
+    """Retrieve the information of an Application"""
     # if connexion.request.is_json:
     #     app_id = AppId.from_dict(connexion.request.get_json())  # noqa: E501
-    return "do some magic!"
+    try:
+        with MongoManager() as db:
+            document = db.find_document("apps", {"_id": appId})
+            if document is None:
+                raise NotFound404Exception()
+            document["appId"] = document["_id"]
+            del document["_id"]
+
+            return (jsonify(document), 200)
+
+    except NotFound404Exception:
+        return (
+            jsonify({"status": 404, "code": "NOT_FOUND", "message": "Resource does not exist"}),
+            404,
+        )
+
+    except Exception as e:
+        return (
+            jsonify({"error": "An unexpected error occurred", "details": str(e)}),
+            500,
+        )
 
 
 def delete_app(appId, x_correlator=None):  # noqa: E501
