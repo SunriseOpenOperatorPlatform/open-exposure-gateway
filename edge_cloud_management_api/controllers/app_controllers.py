@@ -60,8 +60,6 @@ def get_apps(x_correlator=None):  # noqa: E501
 
 def get_app(appId, x_correlator=None):  # noqa: E501
     """Retrieve the information of an Application"""
-    # if connexion.request.is_json:
-    #     app_id = AppId.from_dict(connexion.request.get_json())  # noqa: E501
     try:
         with MongoManager() as db:
             document = db.find_document("apps", {"_id": appId})
@@ -86,18 +84,28 @@ def get_app(appId, x_correlator=None):  # noqa: E501
 
 
 def delete_app(appId, x_correlator=None):  # noqa: E501
-    """Delete an Application from an Edge Cloud Provider
+    """Delete Application metadata from an Edge Cloud Provider"""
+    try:
+        with MongoManager() as db:
+            number_of_deleted_documents = db.delete_document("apps", {"_id": appId})
+            if number_of_deleted_documents == 0:
+                raise NotFound404Exception()
+            elif number_of_deleted_documents == 1:
+                return ("", 204)
+            else:
+                raise Exception(f"deleted {number_of_deleted_documents} documents")
 
-    Delete all the information and content related to an Application # noqa: E501
+    except NotFound404Exception:
+        return (
+            jsonify({"status": 404, "code": "NOT_FOUND", "message": "Resource does not exist"}),
+            404,
+        )
 
-    :param appId: Identificator of the application to be deleted provided by the Edge Cloud Provider once the submission was successful
-    :type appId: dict | bytes
-    :param x_correlator: Correlation id for the different services
-    :type x_correlator: str
-
-    :rtype: None
-    """
-    return "do some magic!"
+    except Exception as e:
+        return (
+            jsonify({"status": 500, "code": "INTERNAL", "message": f"Internal server error: {str(e)}"}),
+            500,
+        )
 
 
 def create_app_instance(body, app_id, x_correlator=None):  # noqa: E501
