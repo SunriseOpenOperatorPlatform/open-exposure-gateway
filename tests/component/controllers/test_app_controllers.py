@@ -1,5 +1,7 @@
+import json
+import pathlib
+import pymongo
 import pytest
-from unittest.mock import MagicMock, patch
 from flask import Flask
 from edge_cloud_management_api.app import get_app_instance
 from edge_cloud_management_api.controllers.app_controllers import submit_app, get_apps, get_app
@@ -15,62 +17,60 @@ def test_app():
     return flask_app.app
 
 
+@pytest.fixture(scope="function")
+def mongo_load_apps_collection_data():
+    """Fixture to insert specific test data into a MongoDB collection before running app controllers tests."""
+    from edge_cloud_management_api.configs.env_config import config
+
+    # rely on the loaded environmental variables to maintain consistency across app and tests
+    client = pymongo.MongoClient(config.MONGO_URI)
+    db_name: str = config.MONGO_URI.split("/")[-1].split("?")[0]
+    db = client[db_name]
+
+    tests_fixtures_base_path = pathlib.Path(__file__).resolve().parent.parent.parent
+    with open(tests_fixtures_base_path / "fixtures/mongo-apps-test-collection-dump.json") as f:
+        data = json.load(f)
+
+    collection = db["apps"]
+    if db_name != "test_db":
+        raise ValueError(
+            "Tests do disrupt the database collection data. To make sure it doesn't delete any production data by mistake, the test database must have a name of 'test_db'. If by error you try to execute tests against your production db, this check should protect you."
+        )
+    collection.delete_many({})
+    collection.insert_many(data)
+
+    client.close()
+
+
 @pytest.fixture
-def mock_get_all_cloud_zones():
-    with patch(
-        "edge_cloud_management_api.controllers.edge_cloud_controller.get_all_cloud_zones",
-        return_value=[],
-    ) as mock_function:
-        yield mock_function
+def success_submit_pair():
+    tests_path = pathlib.Path(__file__).resolve().parent.parent.parent
+    with open(tests_path / "fixtures/submit-app-sample.json") as f:
+        data = json.load(f)
+    return data, 201
 
 
-example_submit_input = {
-    "name": "etO2zndyzpL1P",
-    "appProvider": "TBPhbx4MO6n",
-    "version": "string",
-    "packageType": "QCOW2",
-    "operatingSystem": {"architecture": "x86_64", "family": "RHEL", "version": "OS_VERSION_UBUNTU_2204_LTS", "license": "OS_LICENSE_TYPE_FREE"},
-    "appRepo": {
-        "type": "PRIVATEREPO",
-        "imagePath": "https://charts.bitnami.com/bitnami/helm/example-chart:0.1.0",
-        "userName": "string",
-        "credentials": "string",
-        "authType": "DOCKER",
-        "checksum": "string",
-    },
-    "requiredResources": {},
-    "componentSpec": [{"componentName": "string", "networkInterfaces": [{"interfaceId": "zKJ9YWHujxe73gorEzEImKfr6", "protocol": "TCP", "port": 65535, "visibilityType": "VISIBILITY_EXTERNAL"}]}],
-}
-
-
-@pytest.mark.parametrize(
-    "x_correlator, body, expected_response_status, expected_response_body",
-    [(None, example_submit_input, 201, {"appId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"})],
-)
+@pytest.mark.component
 def test_submit_app(
-    x_correlator,
-    body,
-    expected_response_status,
-    expected_response_body,
-    mock_get_all_cloud_zones: MagicMock,
+    success_submit_pair,
     test_app: Flask,
 ):
     """
     Test the submit_app controller.
     """
+    request_body, expected_response_status = success_submit_pair
     with test_app.test_request_context():
-        response, response_status = submit_app(body)
+        response, response_status = submit_app(request_body)
         assert response_status == expected_response_status
         if expected_response_status == 400:
             assert response.json["code"] == "VALIDATION_ERROR"
         elif expected_response_status == 201:
             assert "appId" in response.json
-            # assert len(response.json) == expected_count
-            # mock_get_all_cloud_zones.assert_called_once()
         else:
             assert False
 
 
+@pytest.mark.component
 @pytest.mark.parametrize(
     "x_correlator, expected_response_status",
     [(None, 200)],
@@ -78,6 +78,7 @@ def test_submit_app(
 def test_get_apps(
     x_correlator,
     expected_response_status,
+    mongo_load_apps_collection_data,
     test_app: Flask,
 ):
     """
@@ -86,16 +87,13 @@ def test_get_apps(
     with test_app.test_request_context():
         response, response_status = get_apps(x_correlator)
         assert response_status == expected_response_status
-        # if expected_response_status == 200:
-        #     assert "appId" in response.json
-        # else:
-        #     assert False
 
 
+@pytest.mark.component
 @pytest.mark.parametrize(
     "x_correlator, app_id, expected_response_status",
     [
-        (None, "e343569e-e92c-4adc-9719-468b3b00a9d3", 200),
+        (None, "17b1b16b-5202-4ab6-9262-de53537ed787", 200),
         (None, "e343569e-192c-4adc-9719-468b3b00a9d3", 404),
     ],
 )
@@ -103,6 +101,7 @@ def test_get_app(
     x_correlator,
     app_id,
     expected_response_status,
+    mongo_load_apps_collection_data,
     test_app: Flask,
 ):
     """
