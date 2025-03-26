@@ -34,6 +34,10 @@ dev = [
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+markers = [
+    "unit: Marks a test as a unit test. Run 'pytest -m \"unit\"' to run only unit tests.",
+    "component: Marks a test as a component test requiring external dependencies (mongodb).",
+]
 
 [tool.ruff]
 exclude = [".eggs", ".git", ".ruff_cache", ".tox", ".venv"]
