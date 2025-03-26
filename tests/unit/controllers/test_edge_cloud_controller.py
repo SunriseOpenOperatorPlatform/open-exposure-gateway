@@ -1,3 +1,5 @@
+import json
+import pathlib
 import pytest
 from unittest.mock import MagicMock, patch
 from flask import Flask
@@ -5,30 +7,6 @@ from edge_cloud_management_api.controllers.edge_cloud_controller import (
     get_edge_cloud_zones,
 )
 from edge_cloud_management_api.app import get_app_instance
-
-MOCK_ZONES = [
-    {
-        "edgeCloudZoneId": "046b6c7f-0b8a-43b9-b35d-6489e6daee91",
-        "edgeCloudZoneName": "Zone1",
-        "edgeCloudZoneStatus": "active",
-        "edgeCloudProvider": "Provider1",
-        "edgeCloudRegion": "Region1",
-    },
-    {
-        "edgeCloudZoneId": "513e4567-e89b-12d3-a456-426614174000",
-        "edgeCloudZoneName": "Zone3",
-        "edgeCloudZoneStatus": "inactive",
-        "edgeCloudProvider": "Provider3",
-        "edgeCloudRegion": "Region1",
-    },
-    {
-        "edgeCloudZoneId": "123e4567-e89b-12d3-a456-426614174000",
-        "edgeCloudZoneName": "Zone2",
-        "edgeCloudZoneStatus": "inactive",
-        "edgeCloudProvider": "Provider2",
-        "edgeCloudRegion": "Region2",
-    },
-]
 
 
 @pytest.fixture
@@ -38,14 +16,23 @@ def test_app():
 
 
 @pytest.fixture
-def mock_get_all_cloud_zones():
+def mock_zones():
+    tests_path = pathlib.Path(__file__).resolve().parent.parent.parent
+    with open(tests_path / "fixtures/edge-cloud-zones.json") as f:
+        data = json.load(f)
+    return data
+
+
+@pytest.fixture
+def mock_get_all_cloud_zones(mock_zones):
     with patch(
         "edge_cloud_management_api.controllers.edge_cloud_controller.get_all_cloud_zones",
-        return_value=MOCK_ZONES,
+        return_value=mock_zones,
     ) as mock_function:
         yield mock_function
 
 
+@pytest.mark.unit
 @pytest.mark.parametrize(
     "x_correlator, region, status, expected_response_status, expected_count",
     [

@@ -5,12 +5,8 @@ import mongomock
 from edge_cloud_management_api.managers.db_manager import MongoManager
 
 
-def test_equals():
-    assert 1 == 1
-
-
 class TestConfig:
-    MONGO_URI = "mongodb://localhost:27017/test_db"
+    MONGO_URI = "mongodb://test_admin:test_password@localhost:27017/test_db"
 
 
 @pytest.fixture
@@ -31,6 +27,7 @@ def mock_mongo_manager():
                 yield mongo_manager
 
 
+@pytest.mark.unit
 class TestMongoManager:
     """
     Test the MongoManager class.
