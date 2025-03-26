@@ -12,6 +12,16 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:6.0
+        env:
+          MONGO_INITDB_ROOT_USERNAME: test_admin
+          MONGO_INITDB_ROOT_PASSWORD: test_password
+        ports:
+          - 27017:27017
+
     timeout-minutes: 10
     strategy:
       matrix:
@@ -30,4 +40,6 @@ jobs:
         run: pip install tox
 
       - name: Run tox for python 3.12 - tests only
+        env:
+          MONGO_URI: "mongodb://test_admin:test_password@localhost:27017/test_db?authSource=admin"
         run: tox -e 3.12
