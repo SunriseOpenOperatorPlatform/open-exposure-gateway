@@ -39,6 +39,20 @@ jobs:
       - name: Install tox
         run: pip install tox
 
+      - name: Wait for MongoDB to be ready
+        run: |
+          for i in {30..0}; do
+            if mongo --host localhost --eval 'quit(db.runCommand({ ping: 1 }).ok ? 0 : 2)'; then
+              echo "MongoDB is up and running"
+              break
+            fi
+            echo 'MongoDB is unavailable - sleeping'
+            sleep 1
+          done
+        env:
+          MONGO_URI: "mongodb://test_admin:test_password@localhost:27017/test_db?authSource=admin"
+
+
       - name: Run tox for python 3.12 - tests only
         env:
           MONGO_URI: "mongodb://test_admin:test_password@localhost:27017/test_db?authSource=admin"

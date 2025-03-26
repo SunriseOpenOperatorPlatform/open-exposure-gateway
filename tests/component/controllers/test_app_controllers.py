@@ -22,6 +22,9 @@ def mongo_load_apps_collection_data():
     """Fixture to insert specific test data into a MongoDB collection before running app controllers tests."""
     from edge_cloud_management_api.configs.env_config import config
 
+    if not config.MONGO_URI:
+        raise ValueError("MONGO_URI is not set in the environment configuration.")
+
     # rely on the loaded environmental variables to maintain consistency across app and tests
     client = pymongo.MongoClient(config.MONGO_URI)
     db_name: str = config.MONGO_URI.split("/")[-1].split("?")[0]

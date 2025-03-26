@@ -25,6 +25,9 @@ class MongoManager:
         """
         Initializes the MongoDB connection using the URI from Config.
         """
+        if not mongo_uri:
+            raise ValueError("MONGO_URI is not set in the environment configuration.")
+
         self.client = MongoClient(mongo_uri, maxPoolSize=50)
         mongo_db_name: str = mongo_uri.split("/")[-1].split("?")[0]
         self.db = self.client[mongo_db_name]
