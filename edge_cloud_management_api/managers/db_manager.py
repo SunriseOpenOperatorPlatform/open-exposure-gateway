@@ -21,12 +21,12 @@ class MongoManager:
 
     """
 
-    def __init__(self):
+    def __init__(self, mongo_uri=config.MONGO_URI):
         """
         Initializes the MongoDB connection using the URI from Config.
         """
-        self.client = MongoClient(config.MONGO_URI, maxPoolSize=50)
-        mongo_db_name: str = config.MONGO_URI.split("/")[-1]
+        self.client = MongoClient(mongo_uri, maxPoolSize=50)
+        mongo_db_name: str = mongo_uri.split("/")[-1].split("?")[0]
         self.db = self.client[mongo_db_name]
 
     def __enter__(self):
