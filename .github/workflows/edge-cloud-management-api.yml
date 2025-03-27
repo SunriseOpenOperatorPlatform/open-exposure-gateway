@@ -40,7 +40,7 @@ jobs:
         run: pip install tox
 
       - name: Install MongoDB client
-        run: sudo apt-get update && sudo apt-get install -y mongodb-org-shell
+        run: sudo apt-get update && sudo apt-get install -y mongodb
 
       - name: Wait for MongoDB to be ready
         run: |
