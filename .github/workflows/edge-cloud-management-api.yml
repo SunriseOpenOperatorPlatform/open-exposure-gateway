@@ -39,6 +39,9 @@ jobs:
       - name: Install tox
         run: pip install tox
 
+      - name: Install MongoDB client
+        run: sudo apt-get update && sudo apt-get install -y mongodb-org-shell
+
       - name: Wait for MongoDB to be ready
         run: |
           for i in {30..0}; do
@@ -51,7 +54,6 @@ jobs:
           done
         env:
           MONGO_URI: "mongodb://test_admin:test_password@localhost:27017/test_db?authSource=admin"
-
 
       - name: Run tox for python 3.12 - tests only
         env:
