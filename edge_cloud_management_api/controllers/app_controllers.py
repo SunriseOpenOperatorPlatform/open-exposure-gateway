@@ -153,18 +153,39 @@ def get_app_instance(app_id, x_correlator=None, app_instance_id=None, region=Non
     return "do some magic!"
 
 
-def delete_app_instance(app_id, app_instance_id, x_correlator=None):  # noqa: E501
-    """Terminate an Application Instance
-
-    Terminate a running instance of an application within an Edge Cloud Zone  # noqa: E501
-
-    :param app_id: A globally unique identifier associated with the application. Edge Cloud Provider generates this identifier when the application is submitted.
-    :type app_id: dict | bytes
-    :param app_instance_id: Identificator of the specific application instance that will be terminated
-    :type app_instance_id: dict | bytes
-    :param x_correlator: Correlation id for the different services
-    :type x_correlator: str
-
-    :rtype: None
+def delete_app_instance(app_id, app_instance_id, x_correlator=None):
     """
-    return "do some magic!"
+    Terminate an Application Instance
+
+    - Removes a specific app instance from the database.
+    - Returns 204 if deleted, 404 if not found.
+    """
+    try:
+        with MongoManager() as db:
+            query = {
+                "appInstanceId": app_instance_id,
+                "appId": app_id
+            }
+            deleted_count = db.delete_document("appinstances", query)
+
+            if deleted_count == 0:
+                return (
+                    jsonify({
+                        "status": 404,
+                        "code": "NOT_FOUND",
+                        "message": "App instance not found"
+                    }),
+                    404,
+                )
+
+            return "", 204  # Successfully deleted
+
+    except Exception as e:
+        return (
+            jsonify({
+                "status": 500,
+                "code": "INTERNAL",
+                "message": f"Internal server error: {str(e)}"
+            }),
+            500,
+        )
