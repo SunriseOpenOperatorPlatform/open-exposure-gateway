@@ -40,5 +40,5 @@ To run the server on a Docker container, please execute the following from the r
 docker build -t edge_cloud_management_api .
 
 # starting up a container
-docker run -p 8080:8080 edge_cloud_management_api
+docker run -p 8080:8080 --env-file ./.env edge_cloud_management_api
 ```
