@@ -192,6 +192,74 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/AppManifest"
+            examples:
+              KubernetesExample:
+                summary: Example for Kubernetes app
+                value:
+                  name: nginx_web_app
+                  appProvider: nginx_inc
+                  version: 1.0.0
+                  packageType: HELM
+                  operatingSystem:
+                    architecture: x86_64
+                    family: UBUNTU
+                    version: OS_VERSION_UBUNTU_2204_LTS
+                    license: OS_LICENSE_TYPE_FREE
+                  appRepo:
+                    type: PRIVATEREPO
+                    imagePath: "https://charts.bitnami.com/bitnami/nginx:1.25.2"
+                    userName: helm-user
+                    credentials: secure-token
+                    authType: DOCKER
+                    checksum: sha256:4d67e4c1a4b4c8...
+                  requiredResources:
+                    infraKind: kubernetes
+                    applicationResources:
+                      cpuPool:
+                        numCPU: 2
+                        memory: 4096
+                        topology:
+                          minNumberOfNodes: 3
+                          minNodeCpu: 2
+                          minNodeMemory: 4096
+                      gpuPool:
+                        numCPU: 4
+                        memory: 8192
+                        gpuMemory: 32
+                        topology:
+                          minNumberOfNodes: 2
+                          minNodeCpu: 4
+                          minNodeMemory: 8192
+                          minNodeGpuMemory: 16
+                    isStandalone: false
+                    version: "1.29"
+                    additionalStorage: 100GB
+                    networking:
+                      primaryNetwork:
+                        provider: cilium
+                        version: "1.13"
+                      additionalNetworks:
+                        - name: net1
+                          interfaceType: vfio-pci
+                        - name: backend-net
+                          interfaceType: netdevice
+                        - name: db-net
+                          interfaceType: interface
+                    addons:
+                      monitoring: true
+                      ingress: true
+                  componentSpec:
+                    - componentName: nginx_server
+                      networkInterfaces:
+                        - interfaceId: eth0
+                          protocol: TCP
+                          port: 80
+                          visibilityType: VISIBILITY_EXTERNAL
+                        - interfaceId: eth1
+                          protocol: TCP
+                          port: 443
+                          visibilityType: VISIBILITY_EXTERNAL
+
         required: true
       responses:
         "201":
