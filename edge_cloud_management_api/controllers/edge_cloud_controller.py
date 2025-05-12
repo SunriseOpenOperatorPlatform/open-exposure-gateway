@@ -1,6 +1,9 @@
 from flask import jsonify
 from pydantic import BaseModel, Field, ValidationError
 from typing import List
+from edge_cloud_management_api.managers.log_manager import logger
+from edge_cloud_management_api.services.pi_edge_services import PiEdgeAPIClientFactory
+
 
 
 class EdgeCloudZone(BaseModel):
@@ -25,9 +28,38 @@ class EdgeCloudQueryParams(BaseModel):
     )
 
 
-def get_local_zones() -> List[EdgeCloudZone]:
-    """get local Operator Platform available zones from Service Resource Manager"""
-    return []
+def get_local_zones() -> list[dict]:
+    """
+    Get local Operator Platform available zones from PiEdge Service Resource Manager.
+    """
+    try:
+        pi_edge_factory = PiEdgeAPIClientFactory()
+        api_client = pi_edge_factory.create_pi_edge_api_client()
+        result = api_client.edge_cloud_zones()
+
+        if isinstance(result, dict) and "error" in result:
+            logger.error(f"PiEdge error: {result['error']}")
+            return []
+
+        zones = []
+        for node in result:
+            try:
+                zone = EdgeCloudZone(
+                    edgeCloudZoneId=node["id"],
+                    edgeCloudZoneName=node.get("name", "unknown"),
+                    edgeCloudZoneStatus=node.get("status", "unknown"),
+                    edgeCloudProvider=node.get("provider", "local-provider"),
+                    edgeCloudRegion=node.get("region", "default-region")
+                )
+                zones.append(zone.model_dump())
+            except Exception as e:
+                logger.warning(f"Failed to parse node into EdgeCloudZone: {e}")
+
+        return zones
+
+    except Exception as e:
+        logger.exception("Unexpected error while retrieving local zones from PiEdge")
+        return []
 
 
 def get_federated_zones() -> List[EdgeCloudZone]:

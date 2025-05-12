@@ -1,75 +1,47 @@
-from pydantic import BaseModel, HttpUrl, Field  # , UUID4
+#from pydantic import BaseModel, HttpUrl, Field , UUID4
+#from typing import Any, List, Optional
+#from enum import Enum
+# from ipaddress import IPv4Address, IPv6Address
+#from edge_cloud_management_api.models.edge_cloud_models import EdgeCloudZone
+
+
+from pydantic import BaseModel, HttpUrl, Field, UUID4
 from typing import Any, List, Optional
 from enum import Enum
-# from ipaddress import IPv4Address, IPv6Address
+from edge_cloud_management_api.models.edge_cloud_models import EdgeCloudZone  # <-- you should IMPORT this properly
 
-# from edge_cloud_management_api.models.edge_cloud_models import EdgeCloudZone
+# --- Enums ---
 
-
-# Enum definitions
-
-
-# class VisibilityType(str, Enum):
-#     VISIBILITY_EXTERNAL = "VISIBILITY_EXTERNAL"
-#     VISIBILITY_INTERNAL = "VISIBILITY_INTERNAL"
+class VisibilityType(str, Enum):
+    VISIBILITY_EXTERNAL = "VISIBILITY_EXTERNAL"
+    VISIBILITY_INTERNAL = "VISIBILITY_INTERNAL"
 
 
-# class AppInstanceStatus(str, Enum):
-#     ready = "ready"
-#     instantiating = "instantiating"
-#     failed = "failed"
-#     terminating = "terminating"
-#     unknown = "unknown"
+class AppInstanceStatus(str, Enum):
+    ready = "ready"
+    instantiating = "instantiating"
+    failed = "failed"
+    terminating = "terminating"
+    unknown = "unknown"
 
 
-# class Protocol(str, Enum):
-#     TCP = "TCP"
-#     UDP = "UDP"
-#     ANY = "ANY"
+class Protocol(str, Enum):
+    TCP = "TCP"
+    UDP = "UDP"
+    ANY = "ANY"
 
-
-# Model definitions
-
-# class AccessEndpoint(BaseModel):
-#     port: int  # min 0
-#     fqdn: Optional[str]
-#     ipv4Addresses: Optional[List[IPv4Address]]  # minItems: 1
-#     ipv6Addresses: Optional[List[IPv6Address]]  # minItems: 1
-
-#     class Config:
-#         schema_extra = {
-#             "example": {
-#                 "port": 8080,
-#                 "fqdn": "example.com",
-#                 "ipv4Addresses": ["192.168.0.1"],
-#                 "ipv6Addresses": ["2001:db8::1"],
-#             }
-#         }
-
-
-# class ComponentEndpointInfo(BaseModel):
-#     interfaceId: UUID4  # string pattern: ^[A-Za-z0-9][A-Za-z0-9_]{6,30}[A-Za-z0-9]$
-#     accessPoints: AccessEndpoint
-
-
-# class AppInstanceInfo(BaseModel):
-#     appInstanceId: UUID4  # str = Field(..., regex=r"^[0-9a-fA-F-]{36}$")
-#     status: AppInstanceStatus = AppInstanceStatus.unknown  # [ ready, instantiating, failed, terminating, unknown ]
-#     componentEndpointInfo: List[ComponentEndpointInfo]
-#     kubernetesClusterRef: Optional[UUID4]
-#     edgeCloudZone: EdgeCloudZone
-
+# --- Model Definitions ---
 
 class NetworkInterface(BaseModel):
     interfaceId: str = Field(..., pattern="^[A-Za-z][A-Za-z0-9_]{3,31}$")
-    protocol: str  # [ TCP, UDP, ANY ]
-    port: int  # minimum: 1, maximum: 65535
-    visibilityType: str  # [ VISIBILITY_EXTERNAL, VISIBILITY_INTERNAL ]
+    protocol: Protocol
+    port: int  # 1-65535
+    visibilityType: VisibilityType
 
 
 class ComponentSpec(BaseModel):
     componentName: str
-    networkInterfaces: List[NetworkInterface]  # min one occurrence
+    networkInterfaces: List[NetworkInterface]
 
 
 class AppRepo(BaseModel):
@@ -79,12 +51,12 @@ class AppRepo(BaseModel):
         HTTP_BEARER = "HTTP_BEARER"
         NONE = "NONE"
 
-    type: str  # [ PRIVATEREPO, PUBLICREPO ]
+    type: str  # PRIVATEREPO or PUBLICREPO
     imagePath: HttpUrl
     userName: Optional[str]
-    credentials: Optional[str]  # maxLength: 128
+    credentials: Optional[str]  # max 128 characters
     authType: Optional[AppRepoAuthType]
-    checksum: Optional[str]  # MD5 checksum for VM and file-based images, sha256 digest for containers
+    checksum: Optional[str]
 
 
 class AppManifest(BaseModel):
@@ -95,32 +67,27 @@ class AppManifest(BaseModel):
         HELM = "HELM"
 
     class OperatingSystem(BaseModel):
-        architecture: str  # [ x86_64, x86 ]
-        family: str  # [ RHEL, UBUNTU, COREOS, WINDOWS, OTHER ]
-        version: str  # Version of the OS # [ OS_VERSION_UBUNTU_2204_LTS, OS_VERSION_RHEL_8, OS_MS_WINDOWS_2022, OTHER ]
-        license: str  # License needed to activate the OS # [ OS_LICENSE_TYPE_FREE, OS_LICENSE_TYPE_ON_DEMAND, OTHER ]
+        architecture: str  # x86_64, x86
+        family: str  # UBUNTU, RHEL, COREOS, etc
+        version: str
+        license: str
 
-    class RequiredResources(BaseModel):
-        numCPU: int
-        memory: int
-        storage: int
-
-    # appId: Optional[UUID4]
     name: str = Field(..., pattern="^[A-Za-z][A-Za-z0-9_]{1,63}$")
     appProvider: str = Field(..., pattern="^[A-Za-z][A-Za-z0-9_]{7,63}$")
-    version: str  # application version
+    version: str
     packageType: PackageType
     operatingSystem: Optional[OperatingSystem]
     appRepo: AppRepo
-    requiredResources: Any  # Optional[RequiredResources]
+    requiredResources: Any  # Could be KubernetesResources, ContainerResources, etc.
     componentSpec: List[ComponentSpec]
 
 
-# class AppZones(BaseModel):
-#     kubernetesClusterRef: Optional[UUID4]
-#     EdgeCloudZone: EdgeCloudZone
+class AppZones(BaseModel):
+    kubernetesClusterRef: Optional[UUID4]
+    EdgeCloudZone: EdgeCloudZone
 
 
-# class AppInstance(BaseModel):
-#     appId: UUID4
-#     appZones: List[AppZones]
+class AppInstance(BaseModel):
+    appId: UUID4
+    appZones: List[AppZones]
+

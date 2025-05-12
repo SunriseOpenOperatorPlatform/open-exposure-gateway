@@ -10,8 +10,9 @@ class EdgeCloudZoneStatus(str, Enum):
 
 
 class EdgeCloudZone(BaseModel):
-    edgeCloudZoneId: UUID4  # Field(..., regex=r"^[0-9a-fA-F-]{36}$")
+    edgeCloudZoneId: UUID4
     edgeCloudZoneName: str
     edgeCloudZoneStatus: Optional[EdgeCloudZoneStatus]
     edgeCloudProvider: str
     edgeCloudRegion: Optional[str]
+

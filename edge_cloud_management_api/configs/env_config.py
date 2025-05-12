@@ -7,7 +7,7 @@ load_dotenv()
 
 class Configuration(BaseSettings):
     MONGO_URI: str = os.getenv("MONGO_URI")
-    PI_EDGE_BASE_URL: str = os.getenv("PI_EDGE_BASE_URL")
+    SRM_HOST: str = os.getenv("SRM_HOST")
     PI_EDGE_USERNAME: str = os.getenv("PI_EDGE_USERNAME")
     PI_EDGE_PASSWORD: str = os.getenv("PI_EDGE_PASSWORD")
     HTTP_PROXY: str = os.getenv("HTTP_PROXY")

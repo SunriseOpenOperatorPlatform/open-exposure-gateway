@@ -155,16 +155,16 @@ class PiEdgeAPIClientFactory:
     """
 
     def __init__(self):
-        self.default_base_url = config.PI_EDGE_BASE_URL
+        self.default_base_url = config.SRM_HOST
         self.default_username = config.PI_EDGE_USERNAME
         self.default_password = config.PI_EDGE_PASSWORD
 
     def create_pi_edge_api_client(self, base_url=None, username=None, password=None):
         """
-        Factory method to create a new PiEdgeAPIClient instance.
+        Factory method to create a new SRMAPIClient instance.
 
         Args:
-            base_url (str): The base URL for the PiEdge API. If None, the default is used.
+            base_url (str): The base URL for the SRM API. If None, the default is used.
             username (str): The username for authentication. If None, the default is used.
             password (str): The password for authentication. If None, the default is used.
 
