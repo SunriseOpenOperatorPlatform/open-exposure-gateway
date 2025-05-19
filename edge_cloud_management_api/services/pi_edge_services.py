@@ -53,11 +53,11 @@ class PiEdgeAPIClient:
         Helper function to return the authorization headers with token.
         If token is not available, automatically login.
         """
-        if not self.token:
-            self._authenticate()
+        #if not self.token:
+         #   self._authenticate()
 
         return {
-            "Authorization": f"Bearer {self.token}",
+           # "Authorization": f"Bearer {self.token}",
             "Content-Type": "application/json",
         }
 
@@ -121,32 +121,32 @@ class PiEdgeAPIClient:
         Get list of edge zones from /node endpoint.
         """
         url = f"{self.base_url}/node"
-        try:
-            request_headers = self._get_headers()
-            response = self.requests_session.get(url, headers=request_headers)
-            response.raise_for_status()
-            nodes = response.json().get("nodes")
-            if not nodes:
-                raise ValueError("No edge nodes found")
-            return nodes
+        #try:
+        request_headers = self._get_headers()
+        response = self.requests_session.get(url, headers=request_headers)
+        response.raise_for_status()
+        nodes = response.json().get("nodes")
+        if not nodes:
+            raise ValueError("No edge nodes found")
+        return nodes
 
-        except Timeout:
-            return {"error": "The request to the external API timed out. Please try again later."}
+        #except Timeout:
+         #   return {"error": "The request to the external API timed out. Please try again later."}
 
-        except ConnectionError:
-            return {"error": "Failed to connect to the external API service. Service might be unavailable."}
+        #except ConnectionError:
+         #   return {"error": "Failed to connect to the external API service. Service might be unavailable."}
 
-        except requests.exceptions.HTTPError as http_err:
-            return {
-                "error": f"HTTP error occurred: {http_err}.",
-                "status_code": response.status_code,
-            }
+        #except requests.exceptions.HTTPError as http_err:
+         #   return {
+          #      "error": f"HTTP error occurred: {http_err}.",
+           #     "status_code": response.status_code,
+           # }
 
-        except ValueError as val_err:
-            return {"error": str(val_err)}
+        #except ValueError as val_err:
+         #   return {"error": str(val_err)}
 
-        except Exception as err:
-            return {"error": f"An unexpected error occurred: {err}"}
+        #except Exception as err:
+         #   return {"error": f"An unexpected error occurred: {err}"}
 
 
 class PiEdgeAPIClientFactory:
