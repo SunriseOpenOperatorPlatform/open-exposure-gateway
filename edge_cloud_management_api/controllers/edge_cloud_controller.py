@@ -15,7 +15,7 @@ class EdgeCloudZone(BaseModel):
         pattern="^(active|inactive|unknown)$",
     )
     edgeCloudProvider: str = Field(..., description="Name of the Edge Cloud Provider")
-    edgeCloudRegion: str = Field(..., description="Region of the Edge Cloud Zone")
+    edgeCloudRegion: str | None = Field(..., description="Region of the Edge Cloud Zone")
 
 
 class EdgeCloudQueryParams(BaseModel):
@@ -41,21 +41,21 @@ def get_local_zones() -> list[dict]:
             logger.error(f"PiEdge error: {result['error']}")
             return []
 
-        zones = []
-        for node in result:
-            try:
-                zone = EdgeCloudZone(
-                    edgeCloudZoneId=node["id"],
-                    edgeCloudZoneName=node.get("name", "unknown"),
-                    edgeCloudZoneStatus=node.get("status", "unknown"),
-                    edgeCloudProvider=node.get("provider", "local-provider"),
-                    edgeCloudRegion=node.get("region", "default-region")
-                )
-                zones.append(zone.model_dump())
-            except Exception as e:
-                logger.warning(f"Failed to parse node into EdgeCloudZone: {e}")
+        # zones = []
+        # for node in result:
+        #     try:
+        #         zone = EdgeCloudZone(
+        #             edgeCloudZoneId=node["id"],
+        #             edgeCloudZoneName=node.get("name", "unknown"),
+        #             edgeCloudZoneStatus=node.get("status", "unknown"),
+        #             edgeCloudProvider=node.get("provider", "local-provider"),
+        #             edgeCloudRegion=node.get("region", "default-region")
+        #         )
+        #         zones.append(zone.model_dump())
+        #     except Exception as e:
+        #         logger.warning(f"Failed to parse node into EdgeCloudZone: {e}")
 
-        return zones
+        return result
 
     except Exception as e:
         logger.exception("Unexpected error while retrieving local zones from PiEdge")
@@ -101,8 +101,9 @@ def get_edge_cloud_zones(x_correlator: str | None = None, region=None, status=No
             """If status is None, return True (don't apply status filtering), otherwise check if the zone status matches the query status"""
             return (query_params.status is None) or (zone["edgeCloudZoneStatus"] == query_params.status)
 
-        filtered_zones = [zone for zone in get_all_cloud_zones() if (query_region_matches(zone) and query_status_matches(zone))]
-        response = [EdgeCloudZone(**zone).model_dump() for zone in filtered_zones]
+        # filtered_zones = [zone for zone in get_all_cloud_zones() if (query_region_matches(zone) and query_status_matches(zone))]
+        
+        response = [EdgeCloudZone(**zone).model_dump() for zone in get_all_cloud_zones()]
         return jsonify(response), 200
 
     except ValidationError as e:

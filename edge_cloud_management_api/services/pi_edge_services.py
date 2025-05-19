@@ -126,7 +126,7 @@ class PiEdgeAPIClient:
         request_headers = self._get_headers()
         response = requests.get(url, headers=request_headers)
         response.raise_for_status()
-        nodes = response.json().get("nodes")
+        nodes = response.json()
         if not nodes:
             raise ValueError("No edge nodes found")
         return nodes
