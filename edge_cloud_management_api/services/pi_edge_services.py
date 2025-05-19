@@ -16,7 +16,8 @@ class PiEdgeAPIClient:
         self.username = username
         self.password = password
         self.token = None
-        self.requests_session = self._get_proxy_session(proxies)
+        #self.requests_session = self._get_proxy_session(proxies)
+        
 
     def _get_proxy_session(self, session_proxies):
         session = requests.Session()
@@ -68,7 +69,7 @@ class PiEdgeAPIClient:
         url = f"{self.base_url}/serviceFunction"
         try:
             request_headers = self._get_headers()
-            response = self.requests_session.get(url, headers=request_headers)
+            response = requests.get(url, headers=request_headers)
             response.raise_for_status()
             service_functions = response.json()
             if isinstance(service_functions, list):
@@ -123,7 +124,7 @@ class PiEdgeAPIClient:
         url = f"{self.base_url}/node"
         #try:
         request_headers = self._get_headers()
-        response = self.requests_session.get(url, headers=request_headers)
+        response = requests.get(url, headers=request_headers)
         response.raise_for_status()
         nodes = response.json().get("nodes")
         if not nodes:
