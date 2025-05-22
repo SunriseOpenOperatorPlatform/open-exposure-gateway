@@ -100,7 +100,7 @@ class PiEdgeAPIClient:
         """
         url = f"{self.base_url}/deployedServiceFunction"
         try:
-            response = self.requests_session.post(url, json=data, headers=self._get_headers())
+            response = requests.post(url, json=data, headers=self._get_headers())
             response.raise_for_status()
         except Timeout:
             return {"error": "The request to the external API timed out. Please try again later."}
