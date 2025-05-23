@@ -144,14 +144,14 @@ def create_app_instance():
             "appZones": app_zones
         }]
 
-        # 🖨️ Print everything before sending
+        #Print everything before sending
         print("\n=== Preparing Deployment Request ===")
         print(f"Endpoint: {pi_edge_client.base_url}/deployedServiceFunction")
         print(f"Headers: {pi_edge_client._get_headers()}")
         print(f"Payload: {deployment_payload}")
         print("=== End of Deployment Request ===\n")
 
-        # 🛡️ Try sending to Pi-Edge, catch connection errors separately
+        #Try sending to Pi-Edge, catch connection errors separately
         try:
             response = pi_edge_client.deploy_service_function(data=deployment_payload)
 
