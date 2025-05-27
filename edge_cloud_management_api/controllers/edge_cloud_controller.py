@@ -38,7 +38,7 @@ def get_local_zones() -> list[dict]:
         result = api_client.edge_cloud_zones()
 
         if isinstance(result, dict) and "error" in result:
-            logger.error(f"PiEdge error: {result['error']}")
+            logger.error(f"SRM error: {result['error']}")
             return []
 
         # zones = []
@@ -58,7 +58,7 @@ def get_local_zones() -> list[dict]:
         return result
 
     except Exception as e:
-        logger.exception("Unexpected error while retrieving local zones from PiEdge")
+        logger.exception("Unexpected error while retrieving local zones from SRM")
         return []
 
 

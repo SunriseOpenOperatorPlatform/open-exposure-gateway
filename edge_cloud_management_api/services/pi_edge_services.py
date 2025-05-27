@@ -69,7 +69,7 @@ class PiEdgeAPIClient:
         url = f"{self.base_url}/serviceFunction"
         try:
             request_headers = self._get_headers()
-            response = requests.get(url, headers=request_headers)
+            response = requests.get(url, headers=request_headers, verify=False)
             response.raise_for_status()
             service_functions = response.json()
             if isinstance(service_functions, list):
