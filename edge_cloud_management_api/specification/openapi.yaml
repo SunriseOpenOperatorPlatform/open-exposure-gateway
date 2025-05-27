@@ -969,10 +969,10 @@ components:
       required:
         - name
         - version
-        - appProvider
+        # - appProvider
         - packageType
         - appRepo
-        - requiredResources
+        # - requiredResources
         - componentSpec
 
     AppProvider:

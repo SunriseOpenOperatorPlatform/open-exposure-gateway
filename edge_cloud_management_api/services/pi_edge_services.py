@@ -93,6 +93,52 @@ class PiEdgeAPIClient:
 
         except Exception as err:
             return {"error": f"An unexpected error occurred: {err}"}
+        
+        
+    def submit_app(self, body):
+        """
+        Register app metadata to SRM
+        """
+        url = f"{self.base_url}/serviceFunction"
+        try:
+            request_headers = self._get_headers()
+            response = requests.post(url, headers=request_headers, verify=False, json=body)
+            response.raise_for_status()
+            return response.json()
+        except Timeout:
+            return {"error": "The request to the external API timed out. Please try again later."}
+
+        except ConnectionError:
+            return {"error": "Failed to connect to the external API service. Service might be unavailable."}
+
+        except requests.exceptions.HTTPError as http_err:
+            return {
+                "error": f"HTTP error occurred: {http_err}.",
+                "status_code": response.status_code,
+            }
+        
+    def get_app(self, appId):
+        """
+        Get app metadata from SRM
+        """
+        url = f"{self.base_url}/serviceFunction/"+appId
+        try:
+            request_headers = self._get_headers()
+            response = requests.get(url, headers=request_headers, verify=False)
+            response.raise_for_status()
+            return response.json()
+        except Timeout:
+            return {"error": "The request to the external API timed out. Please try again later."}
+
+        except ConnectionError:
+            return {"error": "Failed to connect to the external API service. Service might be unavailable."}
+
+        except requests.exceptions.HTTPError as http_err:
+            return {
+                "error": f"HTTP error occurred: {http_err}.",
+                "status_code": response.status_code,
+            }
+    
 
     def deploy_service_function(self, data: list):
         """

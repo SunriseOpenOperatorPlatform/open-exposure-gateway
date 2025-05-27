@@ -5,6 +5,7 @@ from edge_cloud_management_api.managers.db_manager import MongoManager
 from edge_cloud_management_api.managers.log_manager import logger
 from edge_cloud_management_api.models.application_models import AppManifest, AppZones, AppInstance
 from edge_cloud_management_api.services.pi_edge_services import PiEdgeAPIClientFactory
+from edge_cloud_management_api.services.pi_edge_services import PiEdgeAPIClient
 
 
 class NotFound404Exception(Exception):
@@ -17,16 +18,20 @@ def submit_app(body: dict):
     """
     try:
         # Validate the input data using Pydantic
-        validated_data = AppManifest(**body)
-        validated_data_dict = validated_data.model_dump(mode="json")
-        validated_data_dict["_id"] = str(uuid.uuid4())
+        # validated_data = AppManifest(**body)
+        # validated_data_dict = validated_data.model_dump(mode="json")
+        # validated_data_dict["_id"] = str(uuid.uuid4())
+        pi_edge_factory = PiEdgeAPIClientFactory()
+        api_client = pi_edge_factory.create_pi_edge_api_client()
+        response = api_client.submit_app(body)
         # Insert into MongoDB
-        with MongoManager() as db:
-            document_id = db.insert_document("apps", validated_data_dict)
-            return (
-                jsonify({"appId": str(document_id)}),
-                201,
-            )
+        # with MongoManager() as db:
+        #     document_id = db.insert_document("apps", validated_data_dict)
+        #     return (
+        #         jsonify({"appId": str(document_id)}),
+        #         201,
+        #     )
+        return response
 
     except ValidationError as e:
         return jsonify({"error": "Invalid input", "details": e.errors()}), 400
@@ -41,16 +46,19 @@ def submit_app(body: dict):
 def get_apps(x_correlator=None):  # noqa: E501
     """Retrieve metadata information of all applications"""
     try:
-        with MongoManager() as db:
-            documents_cursor = db.find_documents("apps", {})
-            response_apps = list()
-            for document in documents_cursor:
-                document["appId"] = document["_id"]
-                del document["_id"]
-                response_apps.append(document)
+        pi_edge_factory = PiEdgeAPIClientFactory()
+        api_client = pi_edge_factory.create_pi_edge_api_client()
+        registered_apps = api_client.get_service_functions_catalogue()
+        return registered_apps
+        # with MongoManager() as db:
+        #     documents_cursor = db.find_documents("apps", {})
+        #     response_apps = list()
+        #     for document in documents_cursor:
+        #         document["appId"] = document["_id"]
+        #         del document["_id"]
+        #         response_apps.append(document)
 
-            return (jsonify(response_apps), 200)
-
+        #     return (jsonify(response_apps), 200)
     except Exception as e:
         return (
             jsonify({"error": "An unexpected error occurred", "details": str(e)}),
@@ -61,14 +69,18 @@ def get_apps(x_correlator=None):  # noqa: E501
 def get_app(appId, x_correlator=None):  # noqa: E501
     """Retrieve the information of an Application"""
     try:
-        with MongoManager() as db:
-            document = db.find_document("apps", {"_id": appId})
-            if document is None:
-                raise NotFound404Exception()
-            document["appId"] = document["_id"]
-            del document["_id"]
+        pi_edge_factory = PiEdgeAPIClientFactory()
+        api_client = pi_edge_factory.create_pi_edge_api_client()
+        response = api_client.get_app(appId)
+        return response
+        # with MongoManager() as db:
+        #     document = db.find_document("apps", {"_id": appId})
+        #     if document is None:
+        #         raise NotFound404Exception()
+        #     document["appId"] = document["_id"]
+        #     del document["_id"]
 
-            return (jsonify(document), 200)
+        #     return (jsonify(document), 200)
 
     except NotFound404Exception:
         return (

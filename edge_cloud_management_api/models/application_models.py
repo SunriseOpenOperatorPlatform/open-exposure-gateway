@@ -78,7 +78,7 @@ class AppManifest(BaseModel):
     packageType: PackageType
     operatingSystem: Optional[OperatingSystem]
     appRepo: AppRepo
-    requiredResources: Any  # Could be KubernetesResources, ContainerResources, etc.
+    requiredResources: Optional[Any]  # Could be KubernetesResources, ContainerResources, etc.
     componentSpec: List[ComponentSpec]
 
 
