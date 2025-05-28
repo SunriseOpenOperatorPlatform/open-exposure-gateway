@@ -138,16 +138,16 @@ class PiEdgeAPIClient:
                 "error": f"HTTP error occurred: {http_err}.",
                 "status_code": response.status_code,
             }
-    
-
-    def deploy_service_function(self, data: list):
+        
+    def delete_app(self, appId:str):
         """
-        Post data to the /deployedServiceFunction endpoint.
+        Remove app metadata from SRM
         """
-        url = f"{self.base_url}/deployedServiceFunction"
+        url = f"{self.base_url}/serviceFunction/"+appId
         try:
-            response = requests.post(url, json=data, headers=self._get_headers())
+            response = requests.delete(url,headers=self._get_headers(), verify=False)
             response.raise_for_status()
+            return response
         except Timeout:
             return {"error": "The request to the external API timed out. Please try again later."}
 
@@ -163,6 +163,75 @@ class PiEdgeAPIClient:
         except Exception as err:
             return {"error": f"An unexpected error occurred: {err}"}
 
+    def deploy_service_function(self, data: list):
+        """
+        Post data to the /deployedServiceFunction endpoint.
+        """
+        url = f"{self.base_url}/deployedServiceFunction"
+        try:
+            response = requests.post(url, json=data, headers=self._get_headers(), verify=False)
+            response.raise_for_status()
+            return response.json()
+        except Timeout:
+            return {"error": "The request to the external API timed out. Please try again later."}
+
+        except ConnectionError:
+            return {"error": "Failed to connect to the external API service. Service might be unavailable."}
+
+        except requests.exceptions.HTTPError as http_err:
+            return {
+                "error": f"HTTP error occurred: {http_err}.",
+                "status_code": response.status_code,
+            }
+
+        except Exception as err:
+            return {"error": f"An unexpected error occurred: {err}"}
+        
+
+    def get_app_instances(self):
+        """
+        Retrieve all app instances.
+        """
+        url = f"{self.base_url}/deployedServiceFunction"
+        try:
+            response = requests.get(url, headers=self._get_headers(), verify=False)
+            response.raise_for_status()
+            return response.json()
+        except Timeout:
+            return {"error": "The request to the external API timed out. Please try again later."}
+
+        except ConnectionError:
+            return {"error": "Failed to connect to the external API service. Service might be unavailable."}
+
+        except requests.exceptions.HTTPError as http_err:
+            return {
+                "error": f"HTTP error occurred: {http_err}.",
+                "status_code": response.status_code,
+            }
+        
+
+    def delete_app_instance(self, app_instance_id:str):
+        """
+        Remove app instance.
+        """
+        url = f"{self.base_url}/deployedServiceFunction/"+app_instance_id
+        try:
+            response = requests.delete(url, headers=self._get_headers(), verify=False)
+            response.raise_for_status()
+            return response
+        except Timeout:
+            return {"error": "The request to the external API timed out. Please try again later."}
+
+        except ConnectionError:
+            return {"error": "Failed to connect to the external API service. Service might be unavailable."}
+
+        except requests.exceptions.HTTPError as http_err:
+            return {
+                "error": f"HTTP error occurred: {http_err}.",
+                "status_code": response.status_code,
+            }
+
+
     def edge_cloud_zones(self):
         """
         Get list of edge zones from /node endpoint.
@@ -170,7 +239,7 @@ class PiEdgeAPIClient:
         url = f"{self.base_url}/node"
         #try:
         request_headers = self._get_headers()
-        response = requests.get(url, headers=request_headers)
+        response = requests.get(url, headers=request_headers,verify=False)
         response.raise_for_status()
         nodes = response.json()
         if not nodes:

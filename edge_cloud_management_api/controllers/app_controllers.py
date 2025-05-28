@@ -98,14 +98,18 @@ def get_app(appId, x_correlator=None):  # noqa: E501
 def delete_app(appId, x_correlator=None):  # noqa: E501
     """Delete Application metadata from an Edge Cloud Provider"""
     try:
-        with MongoManager() as db:
-            number_of_deleted_documents = db.delete_document("apps", {"_id": appId})
-            if number_of_deleted_documents == 0:
-                raise NotFound404Exception()
-            elif number_of_deleted_documents == 1:
-                return ("", 204)
-            else:
-                raise Exception(f"deleted {number_of_deleted_documents} documents")
+        pi_edge_factory = PiEdgeAPIClientFactory()
+        api_client = pi_edge_factory.create_pi_edge_api_client()
+        response = api_client.delete_app(appId=appId)
+        return response.json()
+        # with MongoManager() as db:
+        #     number_of_deleted_documents = db.delete_document("apps", {"_id": appId})
+        #     if number_of_deleted_documents == 0:
+        #         raise NotFound404Exception()
+        #     elif number_of_deleted_documents == 1:
+        #         return ("", 204)
+        #     else:
+        #         raise Exception(f"deleted {number_of_deleted_documents} documents")
 
     except NotFound404Exception:
         return (
@@ -136,25 +140,27 @@ def create_app_instance():
             return jsonify({"error": "Missing required fields: appId or appZones"}), 400
 
         # Step 3: Connect to Mongo and check if app exists
-        with MongoManager() as mongo_manager:
-            app_data = mongo_manager.find_document("apps", {"_id": app_id})
-
-        if not app_data:
-            logger.warning(f"No application found with ID {app_id}")
-            return jsonify({"error": "App not found", "details": f"No application found with ID {app_id}"}), 404
-
-        logger.info(f"Application {app_id} found in database")
-
-        # Step 4: Deploy app instance using Pi-Edge client
+        # with MongoManager() as mongo_manager:
+        #     app_data = mongo_manager.find_document("apps", {"_id": app_id})
         pi_edge_client_factory = PiEdgeAPIClientFactory()
         pi_edge_client = pi_edge_client_factory.create_pi_edge_api_client()
+        # app_data = pi_edge_client.get_app(app_id)
 
-        logger.info(f"Preparing to send deployment request to Pi-Edge for appId={app_id}")
+        # if len(app_data)<1:
+        #     logger.warning(f"No application found with ID {app_id}")
+        #     return jsonify({"error": "App not found", "details": f"No application found with ID {app_id}"}), 404
 
-        deployment_payload = [{
+        # logger.info(f"Application {app_id} found in database")
+
+        # Step 4: Deploy app instance using Pi-Edge client
+    
+
+        logger.info(f"Preparing to send deployment request to SRM for appId={app_id}")
+
+        deployment_payload = {
             "appId": app_id,
             "appZones": app_zones
-        }]
+        }
 
         #Print everything before sending
         print("\n=== Preparing Deployment Request ===")
@@ -174,7 +180,7 @@ def create_app_instance():
                     "details": response
                 }), 202  # Still accept the request but warn
 
-            logger.info(f"Deployment response from Pi-Edge: {response}")
+            logger.info(f"Deployment response from SRM: {response}")
 
         except Exception as inner_error:
             logger.error(f"Exception while trying to deploy to SRM: {inner_error}")
@@ -198,16 +204,22 @@ def get_app_instance(app_id=None, x_correlator=None, app_instance_id=None, regio
     Supports filtering by app_id, app_instance_id, and region.
     """
     try:
-        query = {}
-        if app_id:
-            query["appId"] = app_id
-        if app_instance_id:
-            query["appInstanceId"] = app_instance_id
-        if region:
-            query["edgeCloudZone.edgeCloudRegion"] = region
+        # query = {}
+        # if app_id:
+        #     query["appId"] = app_id
+        # if app_instance_id:
+        #     query["appInstanceId"] = app_instance_id
+        # if region:
+        #     query["edgeCloudZone.edgeCloudRegion"] = region
 
-        with MongoManager() as db:
-            instances = list(db.find_documents("appinstances", query))
+        # with MongoManager() as db:
+        #     instances = list(db.find_documents("appinstances", query))
+        instances = None
+        pi_edge_client_factory = PiEdgeAPIClientFactory()
+        pi_edge_client = pi_edge_client_factory.create_pi_edge_api_client()
+
+        if app_id is None and app_instance_id is None:
+            instances = pi_edge_client.get_app_instances()
 
         if not instances:
             return jsonify({
@@ -227,7 +239,7 @@ def get_app_instance(app_id=None, x_correlator=None, app_instance_id=None, regio
         }), 500
 
 
-def delete_app_instance(app_id, app_instance_id, x_correlator=None):
+def delete_app_instance(appInstanceId: str, x_correlator=None):
     """
     Terminate an Application Instance
 
@@ -235,24 +247,28 @@ def delete_app_instance(app_id, app_instance_id, x_correlator=None):
     - Returns 204 if deleted, 404 if not found.
     """
     try:
-        with MongoManager() as db:
-            query = {
-                "appInstanceId": app_instance_id,
-                "appId": app_id
-            }
-            deleted_count = db.delete_document("appinstances", query)
+        pi_edge_client_factory = PiEdgeAPIClientFactory()
+        pi_edge_client = pi_edge_client_factory.create_pi_edge_api_client()
+        response = pi_edge_client.delete_app_instance(appInstanceId)
+        return jsonify({'result': response.text, 'status': response.status_code})
+        # with MongoManager() as db:
+        #     query = {
+        #         "appInstanceId": app_instance_id,
+        #         "appId": app_id
+        #     }
+        #     deleted_count = db.delete_document("appinstances", query)
 
-            if deleted_count == 0:
-                return (
-                    jsonify({
-                        "status": 404,
-                        "code": "NOT_FOUND",
-                        "message": "App instance not found"
-                    }),
-                    404,
-                )
+        #     if deleted_count == 0:
+        #         return (
+        #             jsonify({
+        #                 "status": 404,
+        #                 "code": "NOT_FOUND",
+        #                 "message": "App instance not found"
+        #             }),
+        #             404,
+        #         )
 
-            return "", 204  # Successfully deleted
+        #     return "", 204  # Successfully deleted
 
     except Exception as e:
         return (
