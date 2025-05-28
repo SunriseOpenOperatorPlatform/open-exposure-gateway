@@ -146,7 +146,7 @@ class PiEdgeAPIClient:
         """
         url = f"{self.base_url}/deployedServiceFunction"
         try:
-            response = requests.post(url, json=data, headers=self._get_headers())
+            response = requests.post(url, json=data, headers=self._get_headers(), verify=False)
             response.raise_for_status()
         except Timeout:
             return {"error": "The request to the external API timed out. Please try again later."}
@@ -170,7 +170,7 @@ class PiEdgeAPIClient:
         url = f"{self.base_url}/node"
         #try:
         request_headers = self._get_headers()
-        response = requests.get(url, headers=request_headers)
+        response = requests.get(url, headers=request_headers, verify=False)
         response.raise_for_status()
         nodes = response.json()
         if not nodes:
