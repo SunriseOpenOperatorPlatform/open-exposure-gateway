@@ -167,6 +167,8 @@ tags:
     description: Application and Application Instance Lice Cycle Management
   - name: Edge Cloud
     description: Edge Cloud Zones Availability
+  - name: FederationManagement
+    description: Federation Manager
 
 paths:
   /apps:
@@ -446,20 +448,24 @@ paths:
         - $ref: "#/components/parameters/x-correlator"
       requestBody:
         description: |
-          The Application ID and the array of Edge Cloud Zones to deploy
-          it to.
+          Information about the application and where to deploy it.
         content:
           application/json:
             schema:
               type: object
               required:
+                - name
                 - appId
-                - appZones
+                - edgeCloudZoneId
               properties:
+                name: 
+                  $ref: '#/components/schemas/AppInstanceName'
                 appId:
                   $ref: "#/components/schemas/AppId"
-                appZones:
-                  $ref: "#/components/schemas/AppZones"
+                edgeCloudZoneId:
+                  $ref: "#/components/schemas/EdgeCloudZoneId"
+                kubernetesClusterRef:
+                  $ref: "#/components/schemas/KubernetesClusterRef"
         required: true
       responses:
         "202":
@@ -669,7 +675,465 @@ paths:
           $ref: "#/components/responses/500"
         "503":
           $ref: "#/components/responses/503"
-
+  
+  /partner:
+    post: 
+      tags:
+      - FederationManagement
+      summary: Creates one direction federation with partner operator platform.
+      operationId: edge_cloud_management_api.controllers.federation_manager_controller.create_federation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FederationRequestData'
+        required: true
+      responses:
+        "200":
+          description: Federation meta-info request accepted
+          headers:
+            Location:
+              description: "Contains the URI of the newly created resource, according\
+                \ to the structure: {apiRoot}/operatorplatform/federation/v1/partner/{federationContextId}"
+              required: true
+              style: simple
+              explode: false
+              schema:
+                type: string
+            Accept-Encoding:
+              description: "Accept-Encoding, described in IETF RFC 7694"
+              style: simple
+              explode: false
+              schema:
+                type: string
+            Content-Encoding:
+              description: "Content-Encoding, described in IETF RFC 7231"
+              style: simple
+              explode: false
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FederationResponseData'
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            
+        "404": 
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        "409":
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        "422":
+          description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        "500":
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        "503":
+          description: Service Unavailable
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        "520":
+          description: Web Server Returned an Unknown Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        default:
+          description: Generic Error
+      callbacks:
+        onPartnerStatusEvent:
+          '{$request.body#/partnerStatusLink }':
+            post:
+              requestBody:
+                description: |
+                  OP uses this callback api to notify partner OP about change in federation status, federation metadata or offered zone details. Allowed combinations of objectType and operationType are
+                  - FEDERATION - STATUS: Status specified by parameter 'federationStatus'.
+                  - ZONES - STATUS: Status specified by parameter 'zoneStatus'.
+                  - ZONES - ADD: Use parameter 'addZones' to define add new zones
+                  - ZONES - REMOVE: Use parameter 'removeZones' to define remove zones.
+                  - EDGE_DISCOVERY_SERVICE - UPDATE: Use parameter 'edgeDiscoverySvcEndPoint' to specify new endpoints
+                  - LCM_SERVICE - UPDATE: Use parameter 'lcmSvcEndPoint' to specify new endpoints
+                  - MOBILE_NETWORK_CODES - ADD: Use parameter 'addMobileNetworkIds' to define new mobile network codes.
+                  - MOBILE_NETWORK_CODES - REMOVE: Use parameter 'removeMobileNetworkIds' to remove mobile network codes.
+                  - FIXED_NETWORK_CODES - ADD: Use parameter 'addFixedNetworkIds' to define new fixed network codes.
+                  - FIXED_NETWORK_CODES - REMOVE: Use parameter 'removeFixedNetworkIds' to remove fixed network codes.
+                  - SERVICE_APIS - ADD/REMOVE: Parameter Usage 'addServiceAPIs / removeServiceAPIs' to add or remove Service APIs support.
+                content:
+                  application/json:
+                    schema:
+                      required:
+                      - federationContextId
+                      - modificationDate
+                      - objectType
+                      - operationType
+                      type: object
+                      properties:
+                        federationContextId:
+                          $ref: '#/components/schemas/FederationIdentifier' 
+                        objectType:
+                          type: string
+                          enum:
+                          - FEDERATION
+                          - ZONES
+                          - EDGE_DISCOVERY_SERVICE
+                          - LCM_SERVICE
+                          - MOBILE_NETWORK_CODES
+                          - FIXED_NETWORK_CODES
+                          - SERVICE_APIS
+                        operationType:
+                          type: string
+                          enum:
+                          - STATUS
+                          - UPDATE
+                          - ADD
+                          - REMOVE
+                        edgeDiscoverySvcEndPoint:
+                          $ref: '#/components/schemas/ServiceEndpoint'
+                        lcmSvcEndPoint:
+                          $ref: '#/components/schemas/ServiceEndpoint'
+                        addMobileNetworkIds:
+                          $ref: '#/components/schemas/MobileNetworkIds'
+                        removeMobileNetworkIds:
+                          $ref: '#/components/schemas/MobileNetworkIds'
+                        addFixedNetworkIds:
+                          $ref: '#/components/schemas/FixedNetworkIds'
+                        removeFixedNetworkIds:
+                          $ref: '#/components/schemas/FixedNetworkIds'
+                        addZones:
+                          minItems: 1
+                          type: array
+                          description: "List of zones, which the operator platform\
+                            \ wishes to make available to developers/ISVs of requesting\
+                            \ operator platform."
+                          items:
+                            $ref: '#/components/schemas/ZoneDetails'
+                        removeZones:
+                          minItems: 1
+                          type: array
+                          description: "List of zones, which the operator platform\
+                            \ no longer wishes to share."
+                          items:
+                            $ref: '#/components/schemas/ZoneIdentifier'
+                        addServiceAPIs:
+                          $ref: '#/components/schemas/serviceAPINames'
+                        removeServiceAPIs:
+                          $ref: '#/components/schemas/serviceAPINames'  
+                        zoneStatus:
+                          minItems: 1
+                          type: array
+                          items:
+                            required:
+                            - status
+                            - zoneId
+                            type: object
+                            properties:
+                              zoneId:
+                                $ref: '#/components/schemas/ZoneIdentifier'
+                              status:
+                                $ref: '#/components/schemas/Status'
+                        federationStatus:
+                          $ref: '#/components/schemas/Status'
+                        modificationDate:
+                          type: string
+                          description: Date and time of the federation modification
+                            by the originating partner OP
+                          format: date-time
+              
+              responses:
+                "204":
+                  description: Expected response to a successful call back processing
+                "400":
+                  description: Bad request
+                  content:
+                    application/problem+json:
+                      schema:
+                        $ref: '#/components/schemas/ProblemDetails'
+                "401":
+                  description: Unauthorized
+                  content:
+                    application/problem+json:
+                      schema:
+                        $ref: '#/components/schemas/ProblemDetails'
+                "404":
+                  description: Not Found
+                  content:
+                    application/problem+json:
+                      schema:
+                        $ref: '#/components/schemas/ProblemDetails'
+                "409":
+                  description: Conflict
+                  content:
+                    application/problem+json:
+                      schema:
+                        $ref: '#/components/schemas/ProblemDetails'
+                "422":
+                  description: Unprocessable Entity
+                  content:
+                    application/problem+json:
+                      schema:
+                        $ref: '#/components/schemas/ProblemDetails'
+                "500":
+                  description: Internal Server Error
+                  content:
+                    application/problem+json:
+                      schema:
+                        $ref: '#/components/schemas/ProblemDetails' 
+                "503":
+                  description: Service Unavailable
+                  content:
+                    application/problem+json:
+                      schema:
+                        $ref: '#/components/schemas/ProblemDetails'
+                "520":
+                  description: Web Server Returned an Unknown Error
+                  content:
+                    application/problem+json:
+                      schema:
+                        $ref: '#/components/schemas/ProblemDetails'
+                default:
+                  description: Generic Error
+  
+  /{federationContextId}/partner:
+   get:
+      tags:
+      - FederationManagement
+      summary: "Retrieves details about the federation context with the partner OP.\
+        \ The response shall provide info about the zones offered by the partner,\
+        \ partner OP network codes, information about edge discovery and LCM service\
+        \ etc."
+      operationId: edge_cloud_management_api.controllers.federation_manager_controller.get_federation
+      parameters:
+      - name: federationContextId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/FederationContextId'
+      responses:
+        "200":
+          description: Federation meta-info request accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_1'
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        "401":
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        "404":
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        "409":
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        "422":
+          description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        "500":
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        "503":
+          description: Service Unavailable
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        "520":
+          description: Web Server Returned an Unknown Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        default:
+          description: Generic Error
+   delete:
+     tags:
+     - FederationManagement
+     summary: Remove existing federation with the partner OP
+     operationId: edge_cloud_management_api.controllers.federation_manager_controller.delete_federation
+     parameters:
+     - name: federationContextId
+       in: path
+       required: true
+       style: simple
+       explode: false
+       schema:
+         $ref: '#/components/schemas/FederationContextId'
+     responses:
+       "200":
+         description: Federation removed successfully
+       "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+       "401":
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails' 
+       "409":
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+               
+       "422":
+          description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+       "500":
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'          
+       "503":
+          description: Service Unavailable
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+       "520":
+          description: Web Server Returned an Uknown Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+       default:
+        description: Generic Error
+  /fed-context-id:
+   get:
+     tags: 
+     - FederationManagement
+     summary: Retrieves the existing federationContextId with partner operator platform.
+     operationId: edge_cloud_management_api.controllers.federation_manager_controller.get_federation_context_ids
+     responses:
+       "200":
+         description: Federation context identifier retrieval request accepted
+         headers:
+            Location:
+              description: "Contains the URI of the existing resource, according to\
+                \ the structure: {apiRoot}/operatorplatform/federation/v1/partner/{federationContextId}"
+              required: true
+              style: simple
+              explode: false
+              schema:
+                type: string
+            Accept-Encoding:
+              description: "Accept-Encoding, described in IETF RFC 7694"
+              style: simple
+              explode: false
+              schema:
+                type: string
+            Content-Encoding:
+              description: "Content-Encoding, described in IETF RFC 7231"
+              style: simple
+              explode: false
+              schema:
+                type: string
+         content:
+           application/json:
+             schema:
+               $ref: '#/components/schemas/inline_response_200_2'
+       "400":
+         description: Bad request
+         content:
+           application:/problem+json:
+             schema:
+               $ref: '#/components/schemas/ProblemDetails'
+       "401":
+         description: Unauthorized
+         content:
+           application:/problem+json:
+             schema:
+               $ref: '#/components/schemas/ProblemDetails'
+       "404":
+         description: Not Found
+         content:
+           application/problem+json:
+             schema:
+               $ref: '#/components/schemas/ProblemDetails'
+       "409":
+         description: Conflict
+         content:
+           application/problem+json:
+             schema:
+               $ref: '#/components/schemas/ProblemDetails'
+       "422":
+          description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+       "500":
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+       "503":
+          description: Service Unavailable
+          content:
+            application/problem+json:
+              schema:
+               $ref: '#/components/schemas/ProblemDetails'
+       "520":
+          description: Web Server Returned an Unknown Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+       default:
+         description: Generic Error 
+         
 components:
   # securitySchemes:
   #   openId:
@@ -692,6 +1156,7 @@ components:
       schema:
         type: string
         format: uuid
+
 
   schemas:
     AccessEndpoint:
@@ -742,6 +1207,11 @@ components:
         instance of an application.
         Edge Cloud Platform generates this identifier when the
         instantiation in the Edge Cloud Zone is successful.
+        
+    AppInstanceName:
+      type: string
+      pattern: ^[A-Za-z][A-Za-z0-9_]{1,63}$
+      description: Name of the App instance, scoped to the AppProvider
 
     AppInstanceInfo:
       description: Information about the application instance.
@@ -979,7 +1449,162 @@ components:
       type: string
       pattern: ^[A-Za-z][A-Za-z0-9_]{7,63}$
       description: Human readable name of the Application Provider.
-
+      
+    AppIdentifier:
+      pattern: "^[A-Za-z][A-Za-z0-9_]{7,63}$"
+      type: string
+      description: Identifier used to refer to an application.
+      
+    AppProviderId:
+      pattern: "^[A-Za-z][A-Za-z0-9_]{7,63}$"
+      type: string
+      description: UserId of the app provider.  Identifier is relevant only in context
+        of this federation.
+        
+    ArtefactId:
+      type: string
+      description: A globally unique identifier associated with the artefact. Originating
+        OP generates this identifier when artefact is submitted over NBI.
+      format: uuid
+      
+    CountryCode:
+      pattern: "^[A-Z]{2}$"
+      type: string
+      description: ISO 3166-1 Alpha-2 code for the country of Partner operator
+    
+    CPUArchType:
+      type: string
+      description: "CPU Instruction Set Architecture (ISA) E.g., Intel, Arm etc."
+      enum:
+      - ISA_X86
+      - ISA_X86_64
+      - ISA_ARM_64
+      
+    CallbackCredentials:
+      required:
+      - clientId
+      - clientSecret
+      - tokenUrl
+      type: object
+      properties:
+        tokenUrl:
+          $ref: '#/components/schemas/Uri'
+        clientId:
+          type: string
+          description: Client id for oauth2 client credentials flow.
+        clientSecret:
+          type: string
+          description: Client secret for oauth2 client credentials flow.
+      description: "Authentication credentials for callbacks. Callbacks use the same\
+        \ security scheme, flows, and scopes as the forward path."
+        
+    GeoLocation:
+      pattern: "^([-+]?)([\\d]{1,2})((((\\.)([\\d]{1,4}))?(,)))(([-+]?)([\\d]{1,3})((\\\
+        .)([\\d]{1,4}))?)$"
+      type: string
+      description: "Latitude,Longitude as decimal fraction up to 4 digit precision"
+    
+    InstanceIdentifier:
+      pattern: "^[A-Za-z0-9][A-Za-z0-9_]{6,62}[A-Za-z0-9]$"
+      type: string
+      description: Unique identifier generated by the partner OP to identify an instance
+        of the application on a specific zone.
+    
+    InstanceState:
+      type: string
+      description: Running status of the application instance.
+      enum:
+      - PENDING
+      - READY
+      - FAILED
+      - TERMINATING
+      
+    inline_response_200:
+      required:
+      - federationSupportedAPIs
+      type: object
+      properties:
+        federationSupportedAPIs:
+          $ref: '#/components/schemas/FederationSupportedAPIs'
+      example:
+        federationSupportedAPIs:
+          availabilityZoneAPI: null
+          artefactAPI: null
+          fileAPI: null
+          resourceMonitoringAPI: null
+          faultManagementAPI: null
+          federationBaseAPI:
+            name: FEDERATION
+            apiOperations:
+            - httpMethods:
+              - POST
+              - POST
+              href: href
+            - httpMethods:
+              - POST
+              - POST
+              href: href
+          serviceAPIFederation: null
+          eventManagementAPI: null
+          edgeApplicationAPI: null
+    
+    inline_response_200_1:
+      required:
+      - edgeDiscoveryServiceEndPoint
+      - lcmServiceEndPoint
+      type: object
+      properties:
+        edgeDiscoveryServiceEndPoint:
+          $ref: '#/components/schemas/ServiceEndpoint'
+        lcmServiceEndPoint:
+          $ref: '#/components/schemas/ServiceEndpoint'
+        allowedMobileNetworkIds:
+          $ref: '#/components/schemas/MobileNetworkIds'
+        allowedFixedNetworkIds:
+          $ref: '#/components/schemas/FixedNetworkIds'
+        offeredAvailabilityZones:
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/ZoneDetails'
+      example:
+        allowedFixedNetworkIds:
+        - allowedFixedNetworkIds
+        - allowedFixedNetworkIds
+        offeredAvailabilityZones:
+        - geographyDetails: geographyDetails
+          zoneId: zoneId
+          geolocation: geolocation
+        - geographyDetails: geographyDetails
+          zoneId: zoneId
+          geolocation: geolocation
+        lcmServiceEndPoint: null
+        allowedMobileNetworkIds:
+          mncs:
+          - mncs
+          - mncs
+          mcc: mcc
+        edgeDiscoveryServiceEndPoint:
+          ipv4Addresses:
+          - 198.51.100.1
+          - 198.51.100.1
+          port: 0
+          fqdn: fqdn
+          ipv6Addresses:
+          - 2001:db8:85a3::8a2e:370:7334
+          - 2001:db8:85a3::8a2e:370:7334
+    
+    inline_response_200_2:
+      required:
+      - FederationContextId
+      type: object
+      properties:
+        FederationContextId:
+          $ref: '#/components/schemas/FederationContextId'
+      example:
+        FederationContextId: FederationContextId 
+    
+      
     EdgeCloudProvider:
       type: string
       description: Human readable name of the Edge Cloud Provider.
@@ -1006,7 +1631,7 @@ components:
       description: |
         Unique identifier created by the Edge Cloud Platform to identify an
         Edge Cloud Zone within an Edge Cloud.
-
+    
     EdgeCloudZone:
       type: object
       description: |
@@ -1064,6 +1689,315 @@ components:
         - status
         - code
         - message
+        
+    FederationAPINames:
+      type: string
+      enum:
+      - FEDERATION
+      - AVAILZONE
+      - ARTEFACT
+      - FILE
+      - SVSAPEFED
+      - RESMONITOR
+      - EVENTMGMT
+      - FAULTMGMT
+    HttpMethods:
+      type: string
+      enum:
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+      - GET
+    HttpResources:
+      required:
+      - href
+      - httpMethods
+      type: object
+      properties:
+        href:
+          $ref: '#/components/schemas/Uri'
+        httpMethods:
+          type: array
+          description: List of HTTP Methods supported for the given API category
+          items:
+            $ref: '#/components/schemas/HttpMethods'
+      example:
+        httpMethods:
+        - POST
+        - POST
+        href: href
+        
+    FederationAPIResources:
+      required:
+      - apiOperations
+      - name
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/FederationAPINames'
+        apiOperations:
+          type: array
+          description: List of HTTP Methods supported for the given API category
+          items:
+            $ref: '#/components/schemas/HttpResources'
+      example:
+        name: FEDERATION
+        apiOperations:
+        - httpMethods:
+          - POST
+          - POST
+          href: href
+        - httpMethods:
+          - POST
+          - POST
+          href: href
+    State:
+      required:
+      - alarmState
+      type: object
+      properties:
+        alarmState:
+          type: string
+          description: Defines the alarm state during its life cycle (raised | updated
+            | cleared).
+          enum:
+          - RAISED
+          - UPDATED
+          - CLEAR
+      example:
+        alarmState: RAISED
+    serviceType:
+      type: string
+      description: An identifier to refer to partner OP capabilities for application
+        providers.
+      enum:
+      - api_federation
+        
+    FederationSupportedAPIs:
+      required:
+      - artefactAPI
+      - availabilityZoneAPI
+      - edgeApplicationAPI
+      - federationBaseAPI
+      - fileAPI
+      type: object
+      properties:
+        federationBaseAPI:
+          $ref: '#/components/schemas/FederationAPIResources'
+        availabilityZoneAPI:
+          $ref: '#/components/schemas/FederationAPIResources'
+        edgeApplicationAPI:
+          $ref: '#/components/schemas/FederationAPIResources'
+        artefactAPI:
+          $ref: '#/components/schemas/FederationAPIResources'
+        fileAPI:
+          $ref: '#/components/schemas/FederationAPIResources'
+        serviceAPIFederation:
+          $ref: '#/components/schemas/FederationAPIResources'
+        resourceMonitoringAPI:
+          $ref: '#/components/schemas/FederationAPIResources'
+        faultManagementAPI:
+          $ref: '#/components/schemas/FederationAPIResources'
+        eventManagementAPI:
+          $ref: '#/components/schemas/FederationAPIResources'
+      example:
+        availabilityZoneAPI: null
+        artefactAPI: null
+        fileAPI: null
+        resourceMonitoringAPI: null
+        faultManagementAPI: null
+        federationBaseAPI:
+          name: FEDERATION
+          apiOperations:
+          - httpMethods:
+            - POST
+            - POST
+            href: href
+          - httpMethods:
+            - POST
+            - POST
+            href: href
+        serviceAPIFederation: null
+        eventManagementAPI: null
+        edgeApplicationAPI: null
+    FederationIdentifier:
+      pattern: "^[A-Za-z0-9][A-Za-z0-9-]*$"
+      type: string
+      description: Globally unique identifier allocated to an operator platform. This
+        is valid and used only in context of MEC federation interface.
+        
+    FederationRequestData:
+      required:
+      - initialDate
+      - origOPFederationId
+      - partnerStatusLink
+      type: object
+      properties:
+        origOPFederationId:
+          $ref: '#/components/schemas/FederationIdentifier'
+        origOPCountryCode:
+          $ref: '#/components/schemas/CountryCode'
+        origOPMobileNetworkCodes:
+          $ref: '#/components/schemas/MobileNetworkIds'
+        origOPFixedNetworkCodes:
+          $ref: '#/components/schemas/FixedNetworkIds'
+        initialDate:
+          type: string
+          description: Time zone info of the federation initiated by the originating
+            OP
+          format: date-time
+        partnerStatusLink:
+          $ref: '#/components/schemas/Uri'
+        partnerCallbackCredentials:
+          $ref: '#/components/schemas/CallbackCredentials'
+          
+    FederationResponseData:
+      required:
+      - federationContextId
+      - partnerOPFederationId
+      - platformCaps
+      type: object
+      properties:
+        partnerOPFederationId:
+          $ref: '#/components/schemas/FederationIdentifier'
+        partnerOPCountryCode:
+          $ref: '#/components/schemas/CountryCode'
+        federationContextId:
+          $ref: '#/components/schemas/FederationContextId'
+        edgeDiscoveryServiceEndPoint:
+          $ref: '#/components/schemas/ServiceEndpoint'
+        lcmServiceEndPoint:
+          $ref: '#/components/schemas/ServiceEndpoint'
+        partnerOPMobileNetworkCodes:
+          $ref: '#/components/schemas/MobileNetworkIds'
+        partnerOPFixedNetworkCodes:
+          $ref: '#/components/schemas/FixedNetworkIds'
+        offeredAvailabilityZones:
+          minItems: 1
+          type: array
+          description: "List of zones, which the operator platform wishes to make\
+            \ available to developers/ISVs of requesting operator platform."
+          items:
+            $ref: '#/components/schemas/ZoneDetails'
+    FederationContextId:
+      pattern: "^[A-Za-z0-9][A-Za-z0-9-]*$"
+      type: string
+      description: This identifier shall be provided by the partner OP on successful
+        verification and validation of the federation create request and is used by
+        partner op to identify this newly created federation context. Originating
+        OP shall provide this identifier in any subsequent request towards the partner
+        op.
+      readOnly: true
+      
+    ProblemDetails:
+      type: object
+      properties:
+        title:
+          type: string
+        detail:
+          type: string
+        cause:
+          type: string
+        invalidParams:
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/InvalidParam'
+            
+    ServiceEndpoint:
+      required:
+      - port
+      type: object
+      properties:
+        port:
+          $ref: '#/components/schemas/Port'
+        fqdn:
+          $ref: '#/components/schemas/Fqdn'
+        ipv4Addresses:
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/Ipv4Addr'
+        ipv6Addresses:
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/Ipv6Addr'
+      example:
+        ipv4Addresses:
+        - 198.51.100.1
+        - 198.51.100.1
+        port: 0
+        fqdn: fqdn
+        ipv6Addresses:
+        - 2001:db8:85a3::8a2e:370:7334
+        - 2001:db8:85a3::8a2e:370:7334
+      anyOf:
+      - required:
+        - fqdn
+      - required:
+        - ipv4Addresses
+      - required:
+        - ipv6Addresses
+        
+    InvalidParam:
+      required:
+      - param
+      type: object
+      properties:
+        param:
+          type: string
+        reason:
+          type: string
+          
+    ZoneDetails:
+      required:
+      - geographyDetails
+      - geolocation
+      - zoneId
+      type: object
+      properties:
+        zoneId:
+          $ref: '#/components/schemas/ZoneIdentifier'
+        geolocation:
+          $ref: '#/components/schemas/GeoLocation'
+        geographyDetails:
+          type: string
+          description: "Details about cities or state covered by the edge. Details\
+            \ about the type of locality for eg rural, urban, industrial etc. This\
+            \ information is defined in human readable form."
+      example:
+        geographyDetails: geographyDetails
+        zoneId: zoneId
+        geolocation: geolocation
+        
+    ZoneIdentifier:
+      pattern: "^[A-Za-z0-9][A-Za-z0-9-]*$"
+      type: string
+      description: Human readable name of the zone.
+        
+    ZoneRegistrationRequestData:
+      required:
+      - acceptedAvailabilityZones
+      - availZoneNotifLink
+      type: object
+      properties:
+        acceptedAvailabilityZones:
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/ZoneIdentifier'
+        availZoneNotifLink:
+          $ref: '#/components/schemas/Uri'
+          
+    FixedNetworkIds:
+      minItems: 1
+      type: array
+      description: List of network identifier associated with the fixed line network
+        of the operator platform.
+      items:
+        type: string    
 
     Fqdn:
       type: string
@@ -1147,7 +2081,29 @@ components:
                   - netdevice
                   - vfio-pci
                   - interface
-
+                  
+    Mcc:
+      pattern: "^\\d{3}$"
+      type: string
+    Mnc:
+      pattern: "^\\d{2,3}$"
+      
+    MobileNetworkIds:
+      type: object
+      properties:
+        mcc:
+          $ref: '#/components/schemas/Mcc'
+        mncs:
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/Mnc'
+      example:
+        mncs:
+        - mncs
+        - mncs
+        mcc: mcc
+        
     AdditionalStorage:
       description: Additional storage for the application.
       type: array
@@ -1516,6 +2472,29 @@ components:
       properties:
         appId:
           $ref: "#/components/schemas/AppId"
+          
+    serviceAPINames:
+      minItems: 1
+      type: array
+      description: "List of Service API capability names an OP supports and offers\
+        \ to other OPs \"quality_on_demand\", \"device_location\" etc."
+      items:
+        type: string
+        enum:
+        - QualityOnDemand
+        - DeviceLocation
+        - DeviceStatus
+        - SimSwap
+        - NumberVerification
+        - DeviceIdentifier
+    Status:
+      type: string
+      enum:
+      - FAILED
+      - TEMPORARY_FAILURE
+      - AVAILABLE
+      - LOCKED
+      - NOT_AVAILABLE
 
     Uri:
       type: string
@@ -1617,3 +2596,14 @@ components:
             status: 503
             code: UNAVAILABLE
             message: "Service unavailable"
+            
+            
+
+  
+    
+       
+     
+     
+     
+     
+

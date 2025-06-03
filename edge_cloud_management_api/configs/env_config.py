@@ -11,6 +11,7 @@ class Configuration(BaseSettings):
     PI_EDGE_USERNAME: str = os.getenv("PI_EDGE_USERNAME")
     PI_EDGE_PASSWORD: str = os.getenv("PI_EDGE_PASSWORD")
     HTTP_PROXY: str = os.getenv("HTTP_PROXY")
+    FEDERATION_MANAGER_HOST=os.getenv("FEDERATION_MANAGER_HOST")
 
 
 config = Configuration()

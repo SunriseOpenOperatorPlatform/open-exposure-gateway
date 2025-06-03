@@ -163,7 +163,7 @@ class PiEdgeAPIClient:
         except Exception as err:
             return {"error": f"An unexpected error occurred: {err}"}
 
-    def deploy_service_function(self, data: list):
+    def deploy_service_function(self, data: dict):
         """
         Post data to the /deployedServiceFunction endpoint.
         """
