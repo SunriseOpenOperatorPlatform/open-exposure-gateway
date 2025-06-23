@@ -124,117 +124,64 @@ def delete_app(appId, x_correlator=None):  # noqa: E501
         )
 
 
-#def create_app_instance():
- #   logger.info("Received request to create app instance")
-
-  #  try:
-        # Step 1: Get request body
-   #     body = request.get_json()
-    #    logger.debug(f"Request body: {body}")
-
-        # Step 2: Validate body format
-     #   app_id = body.get('appId')
-     #   app_zones = body.get('appZones')
-
-      #  if not app_id or not app_zones:
-       #     return jsonify({"error": "Missing required fields: appId or appZones"}), 400
-
-        # Step 3: Connect to Mongo and check if app exists
-        # with MongoManager() as mongo_manager:
-        #     app_data = mongo_manager.find_document("apps", {"_id": app_id})
-       # pi_edge_client_factory = PiEdgeAPIClientFactory()
-       # pi_edge_client = pi_edge_client_factory.create_pi_edge_api_client()
-        # app_data = pi_edge_client.get_app(app_id)
-
-        # if len(app_data)<1:
-        #     logger.warning(f"No application found with ID {app_id}")
-        #     return jsonify({"error": "App not found", "details": f"No application found with ID {app_id}"}), 404
-
-        # logger.info(f"Application {app_id} found in database")
-
-        # Step 4: Deploy app instance using Pi-Edge client
-    
-
-        #logger.info(f"Preparing to send deployment request to SRM for appId={app_id}")
-
-       # deployment_payload = {
-        #    "appId": app_id,
-        #    "appZones": app_zones
-        #}
-
-        #Print everything before sending
-       # print("\n=== Preparing Deployment Request ===")
-       # print(f"Endpoint: {pi_edge_client.base_url}/deployedServiceFunction")
-       # print(f"Headers: {pi_edge_client._get_headers()}")
-       # print(f"Payload: {deployment_payload}")
-       # print("=== End of Deployment Request ===\n")
-
-        #Try sending to Pi-Edge, catch connection errors separately
-       # try:
-        #    response = pi_edge_client.deploy_service_function(data=deployment_payload)
-
-         #   if isinstance(response, dict) and "error" in response:
-          #      logger.warning(f"Failed to deploy service function: {response}")
-           #     return jsonify({
-            #        "warning": "Deployment not completed (SRM service unreachable)",
-             #       "details": response
-             #   }), 202  # Still accept the request but warn
-
-           # logger.info(f"Deployment response from SRM: {response}")
-
-       # except Exception as inner_error:
-        #    logger.error(f"Exception while trying to deploy to SRM: {inner_error}")
-         #   return jsonify({
-          #      "warning": "SRM backend unavailable. Deployment request was built correctly.",
-           #     "details": str(inner_error)
-           # }), 202  # Still accept it (because your backend worked)
-
-       # return jsonify({"message": f"Application {app_id} instantiation accepted"}), 202
-
-   # except ValidationError as e:
-    #    logger.error(f"Validation error: {str(e)}")
-     #   return jsonify({"error": "Validation error", "details": str(e)}), 400
-    #except Exception as e:
-     #   logger.error(f"Unexpected error in create_app_instance: {str(e)}")
-     #   return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
 
 def create_app_instance():
     logger.info("Received request to create app instance")
-    
-    try: 
-        
+
+    try:
+
        body = request.get_json()
        logger.debug(f"Request body: {body}")
-       
+
        app_id = body.get("appId")
        edge_zone_id = body.get("edgeCloudZoneId")
        k8s_ref = body.get("kubernetesClusterRef")
-       
+
        if not app_id or not edge_zone_id or not k8s_ref:
            return jsonify({"error": "Missing required fields: appId, edgeCloudZoneId, or kubernetesCLusterRef"}), 400
-       
+
+
        logger.info(f"Preparing to send deployment request to SRM for appId={app_id}")
-       
+
        pi_edge_client_factory = PiEdgeAPICLientFactory()
        pi_edge_client = pi_edge_client_factory.create_pi_edge_api_client()
-       
+
+       # Step 1: Check if edgeCloudZoneId is in local zones
+      #  try:
+      #      local_zones = pi_edge_client.edge_cloud_zones()
+      #      local_zone_ids = [zone["edgeCloudZoneId"] for zone in local_zones]
+      #  except Exception as zone_err:
+      #      logger.error(f"Failed to fetch local zones: {zone_err}")
+      #      return jsonify({"error": "Unable to determine zone ownership", "details": str(zone_err)}), 500
+
+      #  if edge_zone_id not in local_zone_ids:
+      #      logger.info(f"Zone {edge_zone_id} is a partner zone. Triggering federation onboarding.")
+
+            # Step 2: Prepare zones format for federation onboarding
+       #     zones = [{
+        #        "edgeCloudZoneId": edge_zone_id,
+        #        "kubernetesClusterRef": k8s_ref
+        #    }]
+         #   onboarding_result, status_code = onboard_application_to_partners(app_id, zones)
+         #   return jsonify(onboarding_result), status_code
+
        print("\n === Preparing Deployment Request ===")
        print(f" Endpoint: {pi_edge_client.base_url}/deployedServiceFunction")
        print(f" Headers: {pi_edge_client._get_headers()}")
        print(f"Payload: {body}")
        print("=== End of Deployment Request ===\n")
-       
+
        try:
           response = pi_edge_client_deploy_service_function(data=body)
-          
+
           if isinstance(response, dict) and "error" in response:
               logger.warning(f"Failed to deploy service function: {response}")
               return jsonify({
                   "warning": "Deployment not completed (SRM service unreachable)",
                   "details": response
-                  
+
               }), 202
-              
+
           logger.info(f"Deployment response from SRM: {response}")
        except Exception as inner_error:
            logger.error(f"Exception while trying to deploy to SRM: {inner_error}")
