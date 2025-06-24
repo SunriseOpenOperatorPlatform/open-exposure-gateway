@@ -219,12 +219,7 @@ def get_app_instance(app_id=None, x_correlator=None, app_instance_id=None, regio
 
 
 def delete_app_instance(appInstanceId: str, x_correlator=None):
-    """
-    Terminate an Application Instance
-
-    - Removes a specific app instance from the database.
-    - Returns 204 if deleted, 404 if not found.
-    """
+    
     try:
         pi_edge_client_factory = PiEdgeAPIClientFactory()
         pi_edge_client = pi_edge_client_factory.create_pi_edge_api_client()
