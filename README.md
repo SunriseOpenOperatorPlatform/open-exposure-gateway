@@ -1,3 +1,11 @@
+## 🚨 Repository Archived — Project has moved!
+
+This repository is no longer maintained and has been archived.
+
+➡️ **The active development now continues at:**  
+🔗 [https://labs.etsi.org/rep/oop/code/open-exposure-gateway](https://labs.etsi.org/rep/oop/code/open-exposure-gateway)
+
+
 # Open Exposure Gateway
 
 A Server Implementation of the **CAMARA Edge Application Management API** as specified [here](https://github.com/camaraproject/EdgeCloud/blob/main/code/API_definitions/Edge-Application-Management.yaml)
